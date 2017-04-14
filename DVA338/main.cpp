@@ -9,7 +9,7 @@
 #include "mesh.h"
 #include <OpenGL/gl3.h>
 #include <OpenGL/gl3ext.h>
-
+#include "math.h"
 
 int screen_width = 1024;
 int screen_height = 768;
@@ -115,6 +115,31 @@ void renderMesh(Mesh *mesh) {
     glBindVertexArray(0);
 }
 
+void perspectiveprojectionmatrix(Matrix& P)
+{
+    float n = cam.nearPlane;;
+    float f = cam.farPlane;;
+    float aspectRatio = screen_width / (float)screen_height;
+    
+    float scale = tan(cam.fov * 0.5 * M_PI / 180) * n;
+    float r = aspectRatio * scale;
+    float l = -r;
+    float t = scale;
+    float b = -t;
+    
+    P.e[0] = (2*n)/(r-l); P.e[4] = 0.000000f; P.e[ 8] =  (l+r)/(l-r); P.e[12] =  0.0f;
+    P.e[1] = 0.000000f; P.e[5] = (2*n)/(t-b); P.e[ 9] =  (b+t)/(b-t); P.e[13] =  0.0f;
+    P.e[2] = 0.000000f; P.e[6] = 0.000000f; P.e[10] = (f+n)/(n-f); P.e[14] = (2*f*n)/(n-f);
+    P.e[3] = 0.000000f; P.e[7] = 0.000000f; P.e[11] = -1.000000f; P.e[15] =  0.0f;
+}
+
+void hardcodedPmatrix(Matrix& P)
+{
+    P.e[0] = 1.299038f; P.e[4] = 0.000000f; P.e[ 8] =  0.000000f; P.e[12] =  0.0f;
+    P.e[1] = 0.000000f; P.e[5] = 1.732051f; P.e[ 9] =  0.000000f; P.e[13] =  0.0f;
+    P.e[2] = 0.000000f; P.e[6] = 0.000000f; P.e[10] = -1.000200f; P.e[14] = -2.000200f;
+    P.e[3] = 0.000000f; P.e[7] = 0.000000f; P.e[11] = -1.000000f; P.e[15] =  0.0f;
+}
 
 void display(void) {
 	Mesh *mesh;
@@ -129,12 +154,8 @@ void display(void) {
     
 	// Assignment 1: Calculate the projection transform yourself 	
 	// The matrix P should be calculated from camera parameters
-	// Therefore, you need to replace this hard-coded transform. 	
-	P.e[0] = 1.299038f; P.e[4] = 0.000000f; P.e[ 8] =  0.000000f; P.e[12] =  0.0f;
-	P.e[1] = 0.000000f; P.e[5] = 1.732051f; P.e[ 9] =  0.000000f; P.e[13] =  0.0f;
-	P.e[2] = 0.000000f; P.e[6] = 0.000000f; P.e[10] = -1.000200f; P.e[14] = -2.000200f;
-	P.e[3] = 0.000000f; P.e[7] = 0.000000f; P.e[11] = -1.000000f; P.e[15] =  0.0f;
-
+    perspectiveprojectionmatrix(P);
+    
 	// This finds the combined view-projection matrix
 	PV = MatMatMul(P, V);
 
@@ -160,7 +181,29 @@ void changeSize(int w, int h) {
 }
 
 void keypress(unsigned char key, int x, int y) {
+    matrix rotation;
+    rotation = MatMatMul(rotationY(cam.rotation.y), rotationZ(cam.rotation.z));
+    rotation = MatMatMul(rotationX(cam.rotation.x), rotation);
+    
 	switch(key) {
+    case 'a': //Left
+            cam.position = Add(cam.position, Homogenize(MatVecMul(rotation, {-0.2f, 0, 0})));
+            break;
+    case 'd': //right
+            cam.position = Add(cam.position, Homogenize(MatVecMul(rotation, {0.2f, 0, 0})));
+            break;
+    case 'w': //forward
+        cam.position = Add(cam.position, Homogenize(MatVecMul(rotation, {0, 0, -0.2f})));
+        break;
+    case 's': //backwars
+        cam.position = Add(cam.position, Homogenize(MatVecMul(rotation, {0, 0, 0.2f})));
+        break;
+    case 'q': //up
+        cam.position = Add(cam.position, Homogenize(MatVecMul(rotation, {0, -0.2f, 0})));
+        break;
+    case 'e': //down
+        cam.position = Add(cam.position, Homogenize(MatVecMul(rotation, {0, 0.2f, 0})));
+        break;
     case 'x':
         cam.position.x -= 0.2f;
         break;
@@ -179,29 +222,24 @@ void keypress(unsigned char key, int x, int y) {
     case 'Z':
         cam.position.z += 0.2f;
         break;
-    case 'i':
-        cam.rotation.x -= 0.2f;
+    case 'k': //look down
+        cam.rotation.x -= 0.1f;
         break;
-    case 'I':
-        cam.rotation.x += 0.2f;
+    case 'i': //look up
+        cam.rotation.x += 0.1f;
         break;
-    case 'j':
-        cam.rotation.y -= 0.2f;
+    case 'l': //look right
+        cam.rotation.y -= 0.1f;
         break;
-    case 'J':
-        cam.rotation.y += 0.2f;
+    case 'j': //look left
+        cam.rotation.y += 0.1f;
         break;
-    case 'l':
-        cam.rotation.z -= 0.2f;
+    case 'u': //rotate counterclok
+        cam.rotation.z -= 0.1f;
         break;
-    case 'L':
-        cam.rotation.z += 0.2f;
+    case 'o': //rotate clock
+        cam.rotation.z += 0.1f;
         break;
-	case 'Q':
-	case 'q':		
-		//glutLeaveMainLoop();
-        //exit();
-		break;
 	}
     
 	glutPostRedisplay();
@@ -242,9 +280,9 @@ void cleanUp(void) {
 
 int main(int argc, char **argv) {
     
-	// Setup freeGLUT	
+	// Setup freeGLUT
+    ///Probably GLUT and not free glut
 	glutInit(&argc, argv);
-	//glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB | GLUT_3_2_CORE_PROFILE);
     glutInitDisplayMode(GLUT_DEPTH | GLUT_SINGLE | GLUT_RGB | GLUT_3_2_CORE_PROFILE);
 	glutInitWindowSize(screen_width, screen_height);
 	glutCreateWindow("DVA338 Programming Assignments");
