@@ -3,6 +3,25 @@
 #include <stdio.h>
 #include "algebra.h"
 
+Matrix generateOrthographicProjectionMatrix(int width, int height, double n, double f, double fov)
+{
+    Matrix P;
+    float aspectRatio = width / (float)height;
+    
+    float scale = tan(fov * 0.5f * M_PI / 180) * n;
+    float r = aspectRatio * scale;
+    float l = -r;
+    float t = scale;
+    float b = -t;
+    
+    P.e[0] = 2.0f/(r-l);    P.e[4] = 0.000000f;     P.e[ 8] = 0.000000f;     P.e[12] = -((r+l)/(r-l));
+    P.e[1] = 0.000000f;     P.e[5] = 2.0f/(t-b);    P.e[ 9] = 0.000000f;     P.e[13] = -((t+b)/(t-b));
+    P.e[2] = 0.000000f;     P.e[6] = 0.000000f;     P.e[10] = (-2.0f)/(f-n); P.e[14] = -((f+n)/(f-n));
+    P.e[3] = 0.000000f;     P.e[7] = 0.000000f;     P.e[11] = 0.000000f;     P.e[15] = 1.0f;
+    
+    return P;
+}
+
 Matrix generatePerspectiveProjectionMatrix(int width, int height, double n, double f, double fov)
 {
     Matrix P;
@@ -14,7 +33,7 @@ Matrix generatePerspectiveProjectionMatrix(int width, int height, double n, doub
     float t = scale;
     float b = -t;
     
-    P.e[0] = (2*n)/(r-l); P.e[4] = 0.000000f; P.e[ 8] =  (l+r)/(l-r); P.e[12] =  0.0f;
+    P.e[0] = (2.0f*n)/(r-l); P.e[4] = 0.000000f; P.e[ 8] =  (l+r)/(l-r); P.e[12] =  0.0f;
     P.e[1] = 0.000000f; P.e[5] = (2*n)/(t-b); P.e[ 9] =  (b+t)/(b-t); P.e[13] =  0.0f;
     P.e[2] = 0.000000f; P.e[6] = 0.000000f; P.e[10] = (f+n)/(n-f); P.e[14] = (2*f*n)/(n-f);
     P.e[3] = 0.000000f; P.e[7] = 0.000000f; P.e[11] = -1.000000f; P.e[15] =  0.0f;
