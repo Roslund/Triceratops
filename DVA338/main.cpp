@@ -100,45 +100,18 @@ void renderMesh(Mesh *mesh) {
 	GLint loc_PV = glGetUniformLocation(shprg, "PV");
 	glUniformMatrix4fv(loc_PV, 1, GL_FALSE, PV.e);
 
-
 	// Select current resources
     glBindVertexArray(mesh->vao);
 	
 	// To accomplish wireframe rendering (can be removed to get filled triangles)
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_DEPTH_TEST); ///Needed to get Z-buffer/depth for assignment 1.3
     
 	// Draw all triangles
 	glDrawElements(GL_TRIANGLES, mesh->nt * 3, GL_UNSIGNED_INT, NULL);
     
     glBindVertexArray(0);
-}
-
-void perspectiveprojectionmatrix(Matrix& P)
-{
-    float n = cam.nearPlane;;
-    float f = cam.farPlane;;
-    float aspectRatio = screen_width / (float)screen_height;
-    
-    float scale = tan(cam.fov * 0.5 * M_PI / 180) * n;
-    float r = aspectRatio * scale;
-    float l = -r;
-    float t = scale;
-    float b = -t;
-    
-    P.e[0] = (2*n)/(r-l); P.e[4] = 0.000000f; P.e[ 8] =  (l+r)/(l-r); P.e[12] =  0.0f;
-    P.e[1] = 0.000000f; P.e[5] = (2*n)/(t-b); P.e[ 9] =  (b+t)/(b-t); P.e[13] =  0.0f;
-    P.e[2] = 0.000000f; P.e[6] = 0.000000f; P.e[10] = (f+n)/(n-f); P.e[14] = (2*f*n)/(n-f);
-    P.e[3] = 0.000000f; P.e[7] = 0.000000f; P.e[11] = -1.000000f; P.e[15] =  0.0f;
-}
-
-void hardcodedPmatrix(Matrix& P)
-{
-    P.e[0] = 1.299038f; P.e[4] = 0.000000f; P.e[ 8] =  0.000000f; P.e[12] =  0.0f;
-    P.e[1] = 0.000000f; P.e[5] = 1.732051f; P.e[ 9] =  0.000000f; P.e[13] =  0.0f;
-    P.e[2] = 0.000000f; P.e[6] = 0.000000f; P.e[10] = -1.000200f; P.e[14] = -2.000200f;
-    P.e[3] = 0.000000f; P.e[7] = 0.000000f; P.e[11] = -1.000000f; P.e[15] =  0.0f;
 }
 
 void display(void) {
@@ -154,7 +127,7 @@ void display(void) {
     
 	// Assignment 1: Calculate the projection transform yourself 	
 	// The matrix P should be calculated from camera parameters
-    perspectiveprojectionmatrix(P);
+    P = generatePerspectiveProjectionMatrix(screen_width, screen_height, cam.nearPlane, cam.farPlane, cam.fov); 
     
 	// This finds the combined view-projection matrix
 	PV = MatMatMul(P, V);
@@ -165,7 +138,8 @@ void display(void) {
 	// Render all meshes in the scene
 	mesh = meshList;
 		
-	while (mesh != NULL) {
+	while (mesh != NULL)
+    {
 		renderMesh(mesh);
 		mesh = mesh->next;
 	}
@@ -280,10 +254,9 @@ void cleanUp(void) {
 
 int main(int argc, char **argv) {
     
-	// Setup freeGLUT
-    ///Probably GLUT and not free glut
+	// Setup freeGLUT ///Probably GLUT and not free glut, since mac...
 	glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_DEPTH | GLUT_SINGLE | GLUT_RGB | GLUT_3_2_CORE_PROFILE);
+    glutInitDisplayMode(GLUT_DEPTH | GLUT_SINGLE | GLUT_RGB | GLUT_3_2_CORE_PROFILE); /// GLUT_DEPTH is Needed to get Z-buffer/depth for assignment 1.3
 	glutInitWindowSize(screen_width, screen_height);
 	glutCreateWindow("DVA338 Programming Assignments");
 	glutDisplayFunc(display);

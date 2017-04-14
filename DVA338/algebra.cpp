@@ -3,6 +3,25 @@
 #include <stdio.h>
 #include "algebra.h"
 
+Matrix generatePerspectiveProjectionMatrix(int width, int height, double n, double f, double fov)
+{
+    Matrix P;
+    float aspectRatio = width / (float)height;
+    
+    float scale = tan(fov * 0.5 * M_PI / 180) * n;
+    float r = aspectRatio * scale;
+    float l = -r;
+    float t = scale;
+    float b = -t;
+    
+    P.e[0] = (2*n)/(r-l); P.e[4] = 0.000000f; P.e[ 8] =  (l+r)/(l-r); P.e[12] =  0.0f;
+    P.e[1] = 0.000000f; P.e[5] = (2*n)/(t-b); P.e[ 9] =  (b+t)/(b-t); P.e[13] =  0.0f;
+    P.e[2] = 0.000000f; P.e[6] = 0.000000f; P.e[10] = (f+n)/(n-f); P.e[14] = (2*f*n)/(n-f);
+    P.e[3] = 0.000000f; P.e[7] = 0.000000f; P.e[11] = -1.000000f; P.e[15] =  0.0f;
+    
+    return P;
+}
+
 Matrix translate(float x, float y, float z)
 {
     Matrix temp;

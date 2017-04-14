@@ -19,6 +19,7 @@ typedef struct { float x, y, z, w; } HomVector;
 */
 typedef struct matrix { float e[16]; } Matrix;
 
+Matrix generatePerspectiveProjectionMatrix(int width, int height, double near, double far, double fov);
 Matrix translate(float x, float y, float z);
 Matrix rotationX(float rad);
 Matrix rotationY(float rad);
