@@ -25,7 +25,6 @@ GLuint shprg; // Shader program id
 bool paralellProjection = 0;
 bool TweakBarVisible = 0;
 
-
 // Global transform matrices
 // V is the view transform
 // P is the projection transform
@@ -99,11 +98,16 @@ void renderMesh(Mesh *mesh) {
 	
 	// Assignment 1: Apply the transforms from local mesh coordinates to world coordinates here
 	// Combine it with the viewing transform that is passed to the shader below
-
+    Matrix W, VW;
+    W = MatMatMul(rotationZ(mesh->rotation.z), scale(mesh->scale));
+    W = MatMatMul(rotationY(mesh->rotation.y), W);
+    W = MatMatMul(rotationX(mesh->rotation.x), W);
+    
+    VW = MatMatMul(PV, W);
     
 	// Pass the viewing transform to the shader
 	GLint loc_PV = glGetUniformLocation(shprg, "PV");
-	glUniformMatrix4fv(loc_PV, 1, GL_FALSE, PV.e);
+	glUniformMatrix4fv(loc_PV, 1, GL_FALSE, VW.e);
 
 	// Select current resources
     glBindVertexArray(mesh->vao);
@@ -224,22 +228,22 @@ void keypress(unsigned char key, int x, int y) {
         cam.position.z += 0.2f;
         break;
     case 'k': //look down
-        cam.rotation.x -= 0.1f;
+        cam.rotation = Add(cam.rotation, Homogenize(MatVecMul(rotation, {-0.1f, 0, 0})));
         break;
     case 'i': //look up
-        cam.rotation.x += 0.1f;
+        cam.rotation = Add(cam.rotation, Homogenize(MatVecMul(rotation, {0.1f, 0, 0})));
         break;
     case 'l': //look right
-        cam.rotation.y -= 0.1f;
+        cam.rotation = Add(cam.rotation, Homogenize(MatVecMul(rotation, {0, -0.1f, 0})));
         break;
     case 'j': //look left
-        cam.rotation.y += 0.1f;
+        cam.rotation = Add(cam.rotation, Homogenize(MatVecMul(rotation, {0, 0.1f, 0})));
         break;
     case 'u': //rotate counterclok
-        cam.rotation.z -= 0.1f;
+        cam.rotation = Add(cam.rotation, Homogenize(MatVecMul(rotation, {0, 0, -0.1f})));
         break;
     case 'o': //rotate clock
-        cam.rotation.z += 0.1f;
+        cam.rotation = Add(cam.rotation, Homogenize(MatVecMul(rotation, {0, 0, 0.1f})));
         break;
 	}
     
@@ -310,14 +314,40 @@ void prepareTweakBar()
     TwDefine(" TW_HELP visible=false ");  // help bar is hidden
     TwDefine(" TweakBar iconifiable=false ");
     TwDefine(" TweakBar visible=false ");
+
     
     TwAddVarRW(bar, "CamRotation", TW_TYPE_QUAT4F, &cam.rotation,
-               " label='Camera rotation' opened=true help='Change the object orientation.' ");
+               " label='Camera rotation' Group='Camera' opened=true help='Change the camera rotation.' ");
     
     TwAddVarRW(bar, "CamPosition", TW_TYPE_DIR3F, &cam.position,
-               " label='Camera Popsition' opened=true help='Change the object orientation.' ");
+               " label='Camera Position' Group='Camera' opened=false help='Change the camera position.' ");
     TwAddVarRW(bar, "ParalellProjection", TW_TYPE_BOOL32, &paralellProjection,
-               " label='Paralell Projection' key=p help='Toggle Paralell mode.' ");
+               " label='Paralell Projection' Group='Camera' key=p help='Toggle Paralell mode.' ");
+    
+    TwAddSeparator(bar, NULL, " Group='Camera' ");
+    
+    
+    
+    //Add object controls
+    Mesh* mesh = meshList;
+    
+    while (mesh != NULL)
+    {
+        std::string objRoption = " label='Object Rotation' Group='" + mesh->name + "' opened=true help='Change the object rotation.' ";
+        std::string objSoption = " label='Object Scale' Group='" + mesh->name + "' opened=true help='Change the object sacle.' ";
+        std::string objSepOption = " Group='"+ mesh->name +"' ";
+        
+        TwAddVarRW(bar, NULL, TW_TYPE_QUAT4F, &mesh->rotation,
+                   objRoption.c_str());
+        
+        TwAddVarRW(bar, NULL, TW_TYPE_DIR3F, &mesh->scale,
+                   objSoption.c_str());
+        TwAddSeparator(bar, NULL, objSepOption.c_str());
+        mesh = mesh->next;
+    }
+    
+
+
 }
 
 int main(int argc, char **argv)
@@ -332,7 +362,6 @@ int main(int argc, char **argv)
 	glutReshapeFunc(changeSize);
 	glutKeyboardFunc(keypress);
     
-    prepareTweakBar();
 
 	// Output OpenGL version info
 	fprintf(stdout, "OpenGL version: %s\n", (const char *)glGetString(GL_VERSION));
@@ -341,8 +370,8 @@ int main(int argc, char **argv)
 
 	// Insert the 3D models you want in your scene here in a linked list of meshes
 	// Note that "meshList" is a pointer to the first mesh and new meshes are added to the front of the list	
-	//insertModel(&meshList, cow.nov, cow.verts, cow.nof, cow.faces, 20.0);
-	insertModel(&meshList, triceratops.nov, triceratops.verts, triceratops.nof, triceratops.faces, 3.0);
+	insertModel(&meshList, "Cow", cow.nov, cow.verts, cow.nof, cow.faces, 20.0);
+	insertModel(&meshList, "Triceratops", triceratops.nov, triceratops.verts, triceratops.nof, triceratops.faces, 3.0);
 	//insertModel(&meshList, bunny.nov, bunny.verts, bunny.nof, bunny.faces, 60.0);
 	//insertModel(&meshList, cube.nov, cube.verts, cube.nof, cube.faces, 5.0);
 	//insertModel(&meshList, frog.nov, frog.verts, frog.nof, frog.faces, 2.5);
@@ -350,7 +379,8 @@ int main(int argc, char **argv)
 	//insertModel(&meshList, sphere.nov, sphere.verts, sphere.nof, sphere.faces, 12.0);
 	//insertModel(&meshList, teapot.nov, teapot.verts, teapot.nof, teapot.faces, 0.1);
 	
-	
+	prepareTweakBar();
+    
 	init();
 	glutMainLoop();
 

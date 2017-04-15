@@ -2,12 +2,17 @@
 #define _MESH_H_
 
 #include "algebra.h"
+#include <string>
 
 typedef struct _Triangle {
 	int vInds[3]; //vertex indices
 } Triangle;
 
-typedef struct _Mesh { 
+typedef struct _Mesh {
+    std::string name;
+    Vector scale;
+    Vector rotation;
+    Vector translation;
 	int nv;				
 	Vector *vertices;
 	Vector *vnorms;
@@ -26,6 +31,6 @@ typedef struct _Camera {
 	double farPlane; 
 } Camera;
 
-void insertModel(Mesh ** objlist, int nv, float * vArr, int nt, int * tArr, float scale = 1.0);
+void insertModel(Mesh ** objlist, std::string name, int nv, float * vArr, int nt, int * tArr, float scale = 1.0);
 
 #endif
