@@ -10,6 +10,7 @@
 #include <OpenGL/gl3.h>
 #include <OpenGL/gl3ext.h>
 #include "math.h"
+#include "AntTweakBar.h"
 
 int screen_width = 1024;
 int screen_height = 768;
@@ -19,6 +20,10 @@ Mesh *meshList = NULL; // Global pointer to linked list of triangle meshes
 Camera cam = {{0,0,20}, {0,0,0}, 60, 1, 10000}; // Setup the global camera parameters
 
 GLuint shprg; // Shader program id
+
+//Antons globala stuff
+bool paralellProjection = 0;
+bool TweakBarVisible = 0;
 
 
 // Global transform matrices
@@ -127,8 +132,11 @@ void display(void) {
     
 	// Assignment 1: Calculate the projection transform yourself 	
 	// The matrix P should be calculated from camera parameters
-    //P = generatePerspectiveProjectionMatrix(screen_width, screen_height, cam.nearPlane, cam.farPlane, cam.fov);
-    P = generateOrthographicProjectionMatrix(screen_width, screen_height, cam.nearPlane, cam.farPlane, cam.fov);
+    if (paralellProjection) {
+        P = generateOrthographicProjectionMatrix(screen_width, screen_height, cam.nearPlane, cam.farPlane, cam.fov);
+    } else {
+        P = generatePerspectiveProjectionMatrix(screen_width, screen_height, cam.nearPlane, cam.farPlane, cam.fov);
+    }
     
 	// This finds the combined view-projection matrix
 	PV = MatMatMul(P, V);
@@ -145,14 +153,23 @@ void display(void) {
 		mesh = mesh->next;
 	}
 
-	glFlush();
+    TwDraw();
+	//glFlush();
+    
+    // Present frame buffer
+    glutSwapBuffers();
+    
+    // Recall Display at next frame
+    glutPostRedisplay();
 }
 
 void changeSize(int w, int h) {
 	screen_width = w;
 	screen_height = h;
 	glViewport(0, 0, screen_width, screen_height);
-
+    
+    // Send the new window size to AntTweakBar
+    TwWindowSize(screen_width, screen_height);
 }
 
 void keypress(unsigned char key, int x, int y) {
@@ -161,6 +178,15 @@ void keypress(unsigned char key, int x, int y) {
     rotation = MatMatMul(rotationX(cam.rotation.x), rotation);
     
 	switch(key) {
+    case '!':
+            if (TweakBarVisible) {
+                TwDefine(" TweakBar visible=false ");
+                TweakBarVisible = 0;
+            } else {
+                TwDefine(" TweakBar visible=true ");
+                TweakBarVisible = 1;
+            }
+            break;
     case 'a': //Left
             cam.position = Add(cam.position, Homogenize(MatVecMul(rotation, {-0.2f, 0, 0})));
             break;
@@ -217,6 +243,7 @@ void keypress(unsigned char key, int x, int y) {
         break;
 	}
     
+    TwEventKeyboardGLUT(key, x, y);
 	glutPostRedisplay();
 }
 
@@ -253,7 +280,48 @@ void cleanUp(void) {
 #include "./models/mesh_triceratops.h"
 
 
-int main(int argc, char **argv) {
+void prepareTweakBar()
+{
+    // Set GLUT event callbacks
+    // - Directly redirect GLUT mouse button events to AntTweakBar
+    glutMouseFunc((GLUTmousebuttonfun)TwEventMouseButtonGLUT);
+    // - Directly redirect GLUT mouse motion events to AntTweakBar
+    glutMotionFunc((GLUTmousemotionfun)TwEventMouseMotionGLUT);
+    // - Directly redirect GLUT mouse "passive" motion events to AntTweakBar (same as MouseMotion)
+    glutPassiveMotionFunc((GLUTmousemotionfun)TwEventMouseMotionGLUT);
+    // - Directly redirect GLUT key events to AntTweakBar
+    //glutKeyboardFunc((GLUTkeyboardfun)TwEventKeyboardGLUT);
+    ///vi skickar vidare keyboard till tweakbar från vår egen callback function
+    // - Directly redirect GLUT special key events to AntTweakBar
+    glutSpecialFunc((GLUTspecialfun)TwEventSpecialGLUT);
+    // - Send 'glutGetModifers' function pointer to AntTweakBar;
+    //   required because the GLUT key event functions do not report key modifiers states.
+    TwGLUTModifiersFunc(glutGetModifiers);
+    
+    TwInit(TW_OPENGL_CORE, NULL);
+    
+    
+    
+    TwBar *bar;         // Pointer to a tweak bar
+
+    bar = TwNewBar("TweakBar");
+    TwDefine(" TweakBar size='200 400' color='96 216 224' ");
+    TwDefine(" TweakBar refresh=0.1 "); // refresh the bar every 1.5 seconds
+    TwDefine(" TW_HELP visible=false ");  // help bar is hidden
+    TwDefine(" TweakBar iconifiable=false ");
+    TwDefine(" TweakBar visible=false ");
+    
+    TwAddVarRW(bar, "CamRotation", TW_TYPE_QUAT4F, &cam.rotation,
+               " label='Camera rotation' opened=true help='Change the object orientation.' ");
+    
+    TwAddVarRW(bar, "CamPosition", TW_TYPE_DIR3F, &cam.position,
+               " label='Camera Popsition' opened=true help='Change the object orientation.' ");
+    TwAddVarRW(bar, "ParalellProjection", TW_TYPE_BOOL32, &paralellProjection,
+               " label='Paralell Projection' key=p help='Toggle Paralell mode.' ");
+}
+
+int main(int argc, char **argv)
+{
     
 	// Setup freeGLUT ///Probably GLUT and not free glut, since mac...
 	glutInit(&argc, argv);
@@ -263,6 +331,8 @@ int main(int argc, char **argv) {
 	glutDisplayFunc(display);
 	glutReshapeFunc(changeSize);
 	glutKeyboardFunc(keypress);
+    
+    prepareTweakBar();
 
 	// Output OpenGL version info
 	fprintf(stdout, "OpenGL version: %s\n", (const char *)glGetString(GL_VERSION));
@@ -272,13 +342,13 @@ int main(int argc, char **argv) {
 	// Insert the 3D models you want in your scene here in a linked list of meshes
 	// Note that "meshList" is a pointer to the first mesh and new meshes are added to the front of the list	
 	//insertModel(&meshList, cow.nov, cow.verts, cow.nof, cow.faces, 20.0);
-	//insertModel(&meshList, triceratops.nov, triceratops.verts, triceratops.nof, triceratops.faces, 3.0);
+	insertModel(&meshList, triceratops.nov, triceratops.verts, triceratops.nof, triceratops.faces, 3.0);
 	//insertModel(&meshList, bunny.nov, bunny.verts, bunny.nof, bunny.faces, 60.0);
 	//insertModel(&meshList, cube.nov, cube.verts, cube.nof, cube.faces, 5.0);
 	//insertModel(&meshList, frog.nov, frog.verts, frog.nof, frog.faces, 2.5);
 	//insertModel(&meshList, knot.nov, knot.verts, knot.nof, knot.faces, 1.0);
 	//insertModel(&meshList, sphere.nov, sphere.verts, sphere.nof, sphere.faces, 12.0);
-	insertModel(&meshList, teapot.nov, teapot.verts, teapot.nof, teapot.faces, 0.1);
+	//insertModel(&meshList, teapot.nov, teapot.verts, teapot.nof, teapot.faces, 0.1);
 	
 	
 	init();
