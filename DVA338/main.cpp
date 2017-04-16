@@ -17,11 +17,14 @@ int screen_height = 768;
 
 Mesh *meshList = NULL; // Global pointer to linked list of triangle meshes
 
-Camera cam = {{0,0,20}, {0,0,0}, 60, 1, 10000}; // Setup the global camera parameters
+Camera cam = {{0,0,20}, {0,0,0}, 60, 0.1, 10000}; // Setup the global camera parameters
 
 GLuint shprg; // Shader program id
 
 //Antons globala stuff
+enum Projection {Perspective, Frustum, Ortographic};
+
+Projection projection = Perspective;
 bool paralellProjection = 0;
 bool TweakBarVisible = 0;
 
@@ -115,7 +118,7 @@ void renderMesh(Mesh *mesh) {
     VW = MatMatMul(PV, W);
     
 	// Pass the viewing transform to the shader
-	GLint loc_PV = glGetUniformLocation(shprg, "PV");
+	GLint loc_PV = glGetUniformLocation(shprg, "PV"); //Why "PV"???
 	glUniformMatrix4fv(loc_PV, 1, GL_FALSE, VW.e);
 
 	// Select current resources
@@ -145,10 +148,19 @@ void display(void) {
     
 	// Assignment 1: Calculate the projection transform yourself 	
 	// The matrix P should be calculated from camera parameters
-    if (paralellProjection) {
-        P = generateOrthographicProjectionMatrix(screen_width, screen_height, cam.nearPlane, cam.farPlane, cam.fov);
-    } else {
+    ///Should we relly caluclate P here? seams uneasseary to do it everytime something changes
+    //This checks if we use paralell or perspective projection
+    if (projection == Perspective)
+    {
         P = generatePerspectiveProjectionMatrix(screen_width, screen_height, cam.nearPlane, cam.farPlane, cam.fov);
+    }
+    else if(projection == Frustum)
+    {
+        P = generateFrustumProjectionMatrix(screen_width, screen_height, cam.nearPlane, cam.farPlane, cam.fov);
+    }
+    else
+    {
+        P = generateOrthographicProjectionMatrix(screen_width, screen_height, cam.nearPlane, cam.farPlane, cam.fov);
     }
     
 	// This finds the combined view-projection matrix
@@ -181,8 +193,7 @@ void changeSize(int w, int h) {
 	screen_height = h;
 	glViewport(0, 0, screen_width, screen_height);
     
-    // Send the new window size to AntTweakBar
-    TwWindowSize(screen_width, screen_height);
+    TwWindowSize(screen_width, screen_height); /// Send the new window size to AntTweakBar
 }
 
 void keypress(unsigned char key, int x, int y) {
@@ -190,13 +201,17 @@ void keypress(unsigned char key, int x, int y) {
     rotation = MatMatMul(rotationY(cam.rotation.y), rotationZ(cam.rotation.z));
     rotation = MatMatMul(rotationX(cam.rotation.x), rotation);
     
+    TwEventKeyboardGLUT(key, x, y);
+    
 	switch(key) {
     case '!':
             if (TweakBarVisible) {
                 TwDefine(" TweakBar visible=false ");
+                TwDefine(" TW_HELP visible=false ");
                 TweakBarVisible = 0;
             } else {
                 TwDefine(" TweakBar visible=true ");
+                TwDefine(" TW_HELP visible=true ");
                 TweakBarVisible = 1;
             }
             break;
@@ -217,6 +232,24 @@ void keypress(unsigned char key, int x, int y) {
         break;
     case 'e': //down
         cam.position = Add(cam.position, Homogenize(MatVecMul(rotation, {0, 0.2f, 0})));
+        break;
+    case 'A': //Left
+        cam.position = Add(cam.position, Homogenize(MatVecMul(rotation, {-0.9f, 0, 0})));
+        break;
+    case 'D': //right
+        cam.position = Add(cam.position, Homogenize(MatVecMul(rotation, {0.9f, 0, 0})));
+        break;
+    case 'W': //forward
+        cam.position = Add(cam.position, Homogenize(MatVecMul(rotation, {0, 0, -0.9f})));
+        break;
+    case 'S': //backwars
+        cam.position = Add(cam.position, Homogenize(MatVecMul(rotation, {0, 0, 0.9f})));
+        break;
+    case 'Q': //up
+        cam.position = Add(cam.position, Homogenize(MatVecMul(rotation, {0, -0.9f, 0})));
+        break;
+    case 'E': //down
+        cam.position = Add(cam.position, Homogenize(MatVecMul(rotation, {0, 0.9f, 0})));
         break;
     case 'x':
         cam.position.x -= 0.2f;
@@ -254,9 +287,27 @@ void keypress(unsigned char key, int x, int y) {
     case 'o': //rotate clock
         cam.rotation = Add(cam.rotation, Homogenize(MatVecMul(rotation, {0, 0, 0.1f})));
         break;
+    case 'K': //look down
+        cam.rotation = Add(cam.rotation, Homogenize(MatVecMul(rotation, {-0.5f, 0, 0})));
+        break;
+    case 'I': //look up
+        cam.rotation = Add(cam.rotation, Homogenize(MatVecMul(rotation, {0.5f, 0, 0})));
+        break;
+    case 'L': //look right
+        cam.rotation = Add(cam.rotation, Homogenize(MatVecMul(rotation, {0, -0.5f, 0})));
+        break;
+    case 'J': //look left
+        cam.rotation = Add(cam.rotation, Homogenize(MatVecMul(rotation, {0, 0.5f, 0})));
+        break;
+    case 'U': //rotate counterclok
+        cam.rotation = Add(cam.rotation, Homogenize(MatVecMul(rotation, {0, 0, -0.5f})));
+        break;
+    case 'O': //rotate clock
+        cam.rotation = Add(cam.rotation, Homogenize(MatVecMul(rotation, {0, 0, 0.5f})));
+        break;
 	}
     
-    TwEventKeyboardGLUT(key, x, y);
+    
 	glutPostRedisplay();
 }
 
@@ -319,11 +370,22 @@ void prepareTweakBar()
     
     TwInit(TW_OPENGL_CORE, NULL);
     
+    // Create a new TwType to edit Vectors
+    TwStructMember VectorMembers[] =
+    {
+        { "X", TW_TYPE_FLOAT, offsetof(Vector, x), " Step=0.1 " },
+        { "Y", TW_TYPE_FLOAT, offsetof(Vector, y), " Step=0.1 " },
+        { "Z", TW_TYPE_FLOAT, offsetof(Vector, z), " Step=0.1 " }
+    };
+    TwType TW_TYPE_VEC = TwDefineStruct("Vector", VectorMembers, 3, sizeof(Vector), NULL, NULL);
     
+    enum Projection {Perspective, Frustum, Ortographic};
+    TwEnumVal projectionEV[] = { {Perspective, "Perspective"}, {Frustum, "Frustum"}, {Ortographic, "Ortographic"} };
+    TwType TW_TYPE_PROJECTION = TwDefineEnum("TW_TYPE_PROJECTION", projectionEV, 3);
     
-    TwBar *bar;         // Pointer to a tweak bar
-
+    TwBar *bar;// Pointer to a tweak bar
     bar = TwNewBar("TweakBar");
+    TwDefine(" TweakBar label='Settings' ");
     TwDefine(" TweakBar size='200 400' color='96 216 224' ");
     TwDefine(" TweakBar refresh=0.1 "); // refresh the bar every 1.5 seconds
     TwDefine(" TW_HELP visible=false ");  // help bar is hidden
@@ -331,38 +393,27 @@ void prepareTweakBar()
     TwDefine(" TweakBar visible=false ");
 
     //Camera stuff
-    TwAddVarRW(bar, "CamRotation", TW_TYPE_DIR3F, &cam.rotation, " label='Camera rotation' Group='Camera' opened=false help='Change the camera rotation.' ");
-    TwAddButton(bar, "ResetRotation", TwResetCameraRotation, NULL, " label='Reset Rotation' Group='Camera' ");
-    TwAddVarRW(bar, "CamFOV", TW_TYPE_DOUBLE, &cam.fov, " label='Fov' Group='Camera' ");
-    TwAddVarRW(bar, "CamPosition", TW_TYPE_DIR3F, &cam.position, " label='Camera Position' Group='Camera' opened=false help='Change the camera position.' ");
-    TwAddVarRW(bar, "Projection", TW_TYPE_BOOLCPP, &paralellProjection, " label='Projection' Group='Camera' true='Paralell' false='Perspective' key=p help='Toggle Paralell mode.' ");
-    
+    TwAddVarRW(bar, "CamPosition", TW_TYPE_VEC, &cam.position, " label='Camera Position' Group='Camera' help='Change the camera position.' ");
+    TwAddVarRW(bar, "CamRotation", TW_TYPE_VEC, &cam.rotation, " label='Camera rotation' Group='Camera' opened=false help='Change the camera rotation.' ");
+    TwAddButton(bar, "ResetRotation", TwResetCameraRotation, NULL, " label='Reset Rotation' key=r Group='Camera' help='Reset camera rotation to 0 0 0.'");
+    TwAddVarRW(bar, "CamFOV", TW_TYPE_DOUBLE, &cam.fov, " label='Fov' Group='Camera' help='Change the camera Feeld of view.' ");
+    TwAddVarRW(bar, "CamNear", TW_TYPE_DOUBLE, &cam.nearPlane, " label='Near Plane' Group='Camera' Step=0.1 Min=0.1 ");
+    TwAddVarRW(bar, "CamFar", TW_TYPE_DOUBLE, &cam.farPlane, " label='Far Plane' Group='Camera' Step=1 ");
+    TwAddVarRW(bar, "Projection", TW_TYPE_PROJECTION, &projection, " label='Projection' Group='Camera' key=p help='Toggle Paralell mode.' ");
     TwAddSeparator(bar, NULL, " Group='Camera' ");
-    
-    
     
     //Add object controls
     Mesh* mesh = meshList;
-    
     while (mesh != NULL)
     {
-        std::string objRotationOption = " label='Object Rotation' Group='" + mesh->name + "' opened=false help='Change the object rotation.' ";
-        std::string objScaleOption = " label='Object Scale' Group='" + mesh->name + "' opened=false help='Change the object sacle.' ";
-        std::string objTranslationOption = " label='Object Translation' Group='" + mesh->name + "' opened=false help='Change the object translation.' ";
-        std::string objSepOption = " Group='"+ mesh->name +"' ";
-        std::string groupObjects = " TweakBar/" + mesh->name + " Group='Objects' ";
-        
-        TwAddVarRW(bar, NULL, TW_TYPE_QUAT4F, &mesh->Quaternion, objRotationOption.c_str());
-        TwAddVarRW(bar, NULL, TW_TYPE_DIR3F, &mesh->scale, objScaleOption.c_str());
-        TwAddVarRW(bar, NULL, TW_TYPE_DIR3F, &mesh->translation, objTranslationOption.c_str());
-        TwAddSeparator(bar, NULL, objSepOption.c_str());
-        TwDefine(groupObjects.c_str()); //to group all the objects together
+        TwAddVarRW(bar, NULL, TW_TYPE_QUAT4F, &mesh->Quaternion, (" label='Object Rotation' Group='" + mesh->name + "' opened=false help='Change the object rotation.' ").c_str());
+        TwAddVarRW(bar, NULL, TW_TYPE_VEC, &mesh->scale, (" label='Object Scale' Group='" + mesh->name + "' opened=false help='Change the object sacle.' ").c_str());
+        TwAddVarRW(bar, NULL, TW_TYPE_VEC, &mesh->translation, (" label='Object Translation' Group='" + mesh->name + "' opened=false help='Change the object translation.' ").c_str());
+        TwAddSeparator(bar, NULL, (" Group='"+ mesh->name +"' ").c_str());
+        TwDefine((" TweakBar/" + mesh->name + " Group='Objects' ").c_str()); //to group all the objects together
         
         mesh = mesh->next;
     }
-    
-
-
 }
 
 int main(int argc, char **argv)
@@ -385,7 +436,7 @@ int main(int argc, char **argv)
 
 	// Insert the 3D models you want in your scene here in a linked list of meshes
 	// Note that "meshList" is a pointer to the first mesh and new meshes are added to the front of the list	
-	insertModel(&meshList, "Cow", cow.nov, cow.verts, cow.nof, cow.faces, 20.0);
+	//insertModel(&meshList, "Cow", cow.nov, cow.verts, cow.nof, cow.faces, 20.0);
 	insertModel(&meshList, "Triceratops", triceratops.nov, triceratops.verts, triceratops.nof, triceratops.faces, 3.0);
 	//insertModel(&meshList, bunny.nov, bunny.verts, bunny.nof, bunny.faces, 60.0);
 	//insertModel(&meshList, cube.nov, cube.verts, cube.nof, cube.faces, 5.0);

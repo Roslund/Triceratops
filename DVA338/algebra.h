@@ -20,8 +20,9 @@ typedef struct { float x, y, z, w; } HomVector;
 typedef struct matrix { float e[16]; } Matrix;
 
 Matrix rotationQuaternion(HomVector q);
-Matrix generateOrthographicProjectionMatrix(int width, int height, double n, double f, double fov);
 Matrix generatePerspectiveProjectionMatrix(int width, int height, double near, double far, double fov);
+Matrix generateOrthographicProjectionMatrix(int width, int height, double n, double f, double fov);
+Matrix generateFrustumProjectionMatrix(int width, int height, double near, double far, double fov);
 Matrix translate(float x, float y, float z);
 Matrix scale(float x, float y, float z);
 Matrix scale(Vector in);
