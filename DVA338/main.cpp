@@ -99,9 +99,18 @@ void renderMesh(Mesh *mesh) {
 	// Assignment 1: Apply the transforms from local mesh coordinates to world coordinates here
 	// Combine it with the viewing transform that is passed to the shader below
     Matrix W, VW;
+    /*
+    //The old way
     W = MatMatMul(rotationZ(mesh->rotation.z), scale(mesh->scale));
     W = MatMatMul(rotationY(mesh->rotation.y), W);
     W = MatMatMul(rotationX(mesh->rotation.x), W);
+    W = MatMatMul(translate(mesh->translation.x, mesh->translation.y, mesh->translation.z), W);
+     */
+    
+    //the new way
+    W = MatMatMul(rotationQuaternion(mesh->Quaternion), scale(mesh->scale));
+    W = MatMatMul(translate(mesh->translation.x, mesh->translation.y, mesh->translation.z), W);
+
     
     VW = MatMatMul(PV, W);
     
@@ -283,6 +292,12 @@ void cleanUp(void) {
 #include "./models/mesh_teapot.h"
 #include "./models/mesh_triceratops.h"
 
+void TW_CALL TwResetCameraRotation(void *clientData)
+{
+    cam.rotation.x = 0;
+    cam.rotation.y = 0;
+    cam.rotation.z = 0;
+}
 
 void prepareTweakBar()
 {
@@ -315,14 +330,12 @@ void prepareTweakBar()
     TwDefine(" TweakBar iconifiable=false ");
     TwDefine(" TweakBar visible=false ");
 
-    
-    TwAddVarRW(bar, "CamRotation", TW_TYPE_QUAT4F, &cam.rotation,
-               " label='Camera rotation' Group='Camera' opened=true help='Change the camera rotation.' ");
-    
-    TwAddVarRW(bar, "CamPosition", TW_TYPE_DIR3F, &cam.position,
-               " label='Camera Position' Group='Camera' opened=false help='Change the camera position.' ");
-    TwAddVarRW(bar, "ParalellProjection", TW_TYPE_BOOL32, &paralellProjection,
-               " label='Paralell Projection' Group='Camera' key=p help='Toggle Paralell mode.' ");
+    //Camera stuff
+    TwAddVarRW(bar, "CamRotation", TW_TYPE_DIR3F, &cam.rotation, " label='Camera rotation' Group='Camera' opened=false help='Change the camera rotation.' ");
+    TwAddButton(bar, "ResetRotation", TwResetCameraRotation, NULL, " label='Reset Rotation' Group='Camera' ");
+    TwAddVarRW(bar, "CamFOV", TW_TYPE_DOUBLE, &cam.fov, " label='Fov' Group='Camera' ");
+    TwAddVarRW(bar, "CamPosition", TW_TYPE_DIR3F, &cam.position, " label='Camera Position' Group='Camera' opened=false help='Change the camera position.' ");
+    TwAddVarRW(bar, "Projection", TW_TYPE_BOOLCPP, &paralellProjection, " label='Projection' Group='Camera' true='Paralell' false='Perspective' key=p help='Toggle Paralell mode.' ");
     
     TwAddSeparator(bar, NULL, " Group='Camera' ");
     
@@ -333,16 +346,18 @@ void prepareTweakBar()
     
     while (mesh != NULL)
     {
-        std::string objRoption = " label='Object Rotation' Group='" + mesh->name + "' opened=true help='Change the object rotation.' ";
-        std::string objSoption = " label='Object Scale' Group='" + mesh->name + "' opened=true help='Change the object sacle.' ";
+        std::string objRotationOption = " label='Object Rotation' Group='" + mesh->name + "' opened=false help='Change the object rotation.' ";
+        std::string objScaleOption = " label='Object Scale' Group='" + mesh->name + "' opened=false help='Change the object sacle.' ";
+        std::string objTranslationOption = " label='Object Translation' Group='" + mesh->name + "' opened=false help='Change the object translation.' ";
         std::string objSepOption = " Group='"+ mesh->name +"' ";
+        std::string groupObjects = " TweakBar/" + mesh->name + " Group='Objects' ";
         
-        TwAddVarRW(bar, NULL, TW_TYPE_QUAT4F, &mesh->rotation,
-                   objRoption.c_str());
-        
-        TwAddVarRW(bar, NULL, TW_TYPE_DIR3F, &mesh->scale,
-                   objSoption.c_str());
+        TwAddVarRW(bar, NULL, TW_TYPE_QUAT4F, &mesh->Quaternion, objRotationOption.c_str());
+        TwAddVarRW(bar, NULL, TW_TYPE_DIR3F, &mesh->scale, objScaleOption.c_str());
+        TwAddVarRW(bar, NULL, TW_TYPE_DIR3F, &mesh->translation, objTranslationOption.c_str());
         TwAddSeparator(bar, NULL, objSepOption.c_str());
+        TwDefine(groupObjects.c_str()); //to group all the objects together
+        
         mesh = mesh->next;
     }
     

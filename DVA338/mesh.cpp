@@ -2,16 +2,12 @@
 #include "mesh.h"
 
 
-float rnd() {
-	return 2.0f * float(rand()) / float(RAND_MAX) - 1.0f;
-}
-
-
 void insertModel(Mesh **list, std::string name, int nv, float * vArr, int nt, int * tArr, float scale) {
 	Mesh * mesh = (Mesh *) malloc(sizeof(Mesh));
     mesh->name = name;
     mesh->scale = {1, 1, 1};
-    mesh->rotation = {0, 0, 0};
+    mesh->rotation = {0, 0, 0}; //Not really used anymore
+    mesh->Quaternion = {0, 0, 0, 0};
     mesh->translation = {0, 0, 0};
 	mesh->nv = nv;
 	mesh->nt = nt;	
@@ -52,7 +48,7 @@ void insertModel(Mesh **list, std::string name, int nv, float * vArr, int nt, in
         Vector sum;
         int nTrigForVer = 0;
         
-        for(int j = 0; j < nt; j++) ///loo thru all the triangles and check if one of thir corners is our vertex.
+        for(int j = 0; j < nt; j++) ///loop thru all the triangles and check if one of thir corners is our vertex.
         {
             if ( (mesh->triangles[j].vInds[0] == i) || (mesh->triangles[j].vInds[1] == i) || (mesh->triangles[j].vInds[2] == i) )
             {

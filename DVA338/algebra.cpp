@@ -3,6 +3,18 @@
 #include <stdio.h>
 #include "algebra.h"
 
+//qw + i qx + j qy + k qz
+Matrix rotationQuaternion(HomVector q)
+{
+    Matrix temp;
+    temp.e[0] = 1-(2*q.y*q.y)-(2*q.z*q.z);  temp.e[4] = (2*q.x*q.y)-(2*q.z*q.w);    temp.e[8] = (2*q.x*q.z)+(2*q.y*q.w);    temp.e[12] = 0.0f;
+    temp.e[1] = (2*q.x*q.y)+(2*q.z*q.w);    temp.e[5] = 1-(2*q.x*q.x)-(2*q.z*q.z);  temp.e[9] = (2*q.y*q.z)-(2*q.x*q.w);    temp.e[13] = 0.0f;
+    temp.e[2] = (2*q.x*q.z)-(2*q.y*q.w);    temp.e[6] = (2*q.y*q.z)+(2*q.x*q.w);    temp.e[10] = 1-(2*q.x*q.x)-(2*q.y*q.y); temp.e[14] = 0.0f;
+    temp.e[3] = 0.0f;                       temp.e[7] = 0.0f;                       temp.e[11] = 0.0f;                      temp.e[15] = 1.0f;
+    return temp;
+}
+
+
 Matrix generateOrthographicProjectionMatrix(int width, int height, double n, double f, double fov)
 {
     Matrix P;
