@@ -24,17 +24,19 @@ GLuint shprg; // Shader program id
 
 //Antons globala stuff
 enum Projection {Perspective, Frustum, Ortographic};
+char loadModelName[64] = "";
 
 Projection projection = Perspective;
-bool paralellProjection = 0;
 bool TweakBarVisible = 0;
+TwType TW_TYPE_VEC;
+TwBar *bar;// Pointer to a tweak bar
+
 
 // Global transform matrices
 // V is the view transform
 // P is the projection transform
 // PV = P * V is the combined view-projection transform
 Matrix V, P, PV;
-
 
 void prepareShaderProgram(const char ** vs_src, const char ** fs_src) {
     GLint success = GL_FALSE;
@@ -208,11 +210,9 @@ void keypress(unsigned char key, int x, int y) {
         case '!':
             if (TweakBarVisible) {
                 TwDefine(" TweakBar visible=false ");
-                TwDefine(" TW_HELP visible=false ");
                 TweakBarVisible = 0;
             } else {
                 TwDefine(" TweakBar visible=true ");
-                TwDefine(" TW_HELP visible=true ");
                 TweakBarVisible = 1;
             }
             break;
@@ -344,6 +344,53 @@ void cleanUp(void) {
 #include "./models/mesh_teapot.h"
 #include "./models/mesh_triceratops.h"
 
+void removeModelFromTwbar(Mesh* mesh)
+{
+    TwRemoveVar(bar, (mesh->name + "Rotation").c_str());
+    TwRemoveVar(bar, (mesh->name + "Scale").c_str());
+    TwRemoveVar(bar, (mesh->name + "Translation").c_str());
+    TwRemoveVar(bar, (mesh->name + "Unload").c_str());
+}
+
+void removeMeshFromMeshlist(Mesh* meshToRemove)
+{
+    if(meshList == meshToRemove)
+        meshList = meshList->next;
+    
+    Mesh* mesh = meshList;
+    while(mesh != NULL)
+    {
+        if(mesh->next == meshToRemove)
+            mesh->next = meshToRemove->next;
+        else
+            mesh = mesh->next;
+    }
+}
+
+void TW_CALL TwUnloadModel(void *clientData)
+{
+    Mesh* mesh = (Mesh*)clientData;
+    
+    removeModelFromTwbar(mesh);
+    removeMeshFromMeshlist(mesh);
+    
+    fprintf(stdout, "Unloaded  Model: %s\n\n", mesh->name.c_str());
+    free(mesh);
+}
+
+int addModelToTwbar(Mesh* mesh)
+{
+    //Check for errors first
+    if(0 ==TwAddVarRW(bar, (mesh->name + "Rotation").c_str(), TW_TYPE_QUAT4F, &mesh->Quaternion, (" label='Model Rotation' Group='" + mesh->name + "' opened=false ").c_str()))
+        return 0;
+    TwAddVarRW(bar, (mesh->name + "Scale").c_str(), TW_TYPE_VEC, &mesh->scale, (" label='Model Scale' Group='" + mesh->name + "' opened=false ").c_str());
+    TwAddVarRW(bar, (mesh->name + "Translation").c_str(), TW_TYPE_VEC, &mesh->translation, (" label='Model Translation' Group='" + mesh->name + "' opened=false ").c_str());
+    TwAddButton(bar, (mesh->name + "Unload").c_str(), TwUnloadModel, mesh, (" label='Remove model' Group='" + mesh->name + "' ").c_str());
+    //TwAddSeparator(bar, NULL, (" Group='"+ mesh->name +"' ").c_str());
+    TwDefine((" TweakBar/" + mesh->name + " Group='Models' Opened=false ").c_str()); //to group all the objects together
+    return 1;
+}
+
 void TW_CALL TwResetCameraRotation(void *clientData)
 {
     cam.rotation.x = 0;
@@ -351,7 +398,42 @@ void TW_CALL TwResetCameraRotation(void *clientData)
     cam.rotation.z = 0;
 }
 
-char test[64] = "a string allocated dynamically";
+void TW_CALL TwLoadModel(void *clientData)
+{
+    
+    if (strcasecmp(loadModelName,"bunny")==0)
+        insertModel(&meshList, "Bunny", bunny.nov, bunny.verts, bunny.nof, bunny.faces, 60.0);
+    else if (strcasecmp(loadModelName,"cube")==0)
+        insertModel(&meshList, "Cube", cube.nov, cube.verts, cube.nof, cube.faces, 5.0);
+    else if (strcasecmp(loadModelName,"frog")==0)
+        insertModel(&meshList, "Frog", frog.nov, frog.verts, frog.nof, frog.faces, 2.5);
+    else if (strcasecmp(loadModelName,"cow")==0)
+        insertModel(&meshList, "Cow", cow.nov, cow.verts, cow.nof, cow.faces, 20.0);
+    else if (strcasecmp(loadModelName,"knot")==0)
+        insertModel(&meshList, "Knot", knot.nov, knot.verts, knot.nof, knot.faces, 1.0);
+    else if (strcasecmp(loadModelName,"sphere")==0)
+        insertModel(&meshList, "Sphere", sphere.nov, sphere.verts, sphere.nof, sphere.faces, 12.0);
+    else if (strcasecmp(loadModelName,"teapot")==0)
+        insertModel(&meshList, "Teapot", teapot.nov, teapot.verts, teapot.nof, teapot.faces, 0.1);
+    else if (strcasecmp(loadModelName,"triceratops")==0)
+        insertModel(&meshList, "Triceratops", triceratops.nov, triceratops.verts, triceratops.nof, triceratops.faces, 3.0);
+    else {
+        fprintf(stdout, "Unknown model: %s\n\n", loadModelName);
+        strcpy(loadModelName, "Unknown");
+        return;
+    }
+    
+    Mesh* mesh = meshList; //Vår mesh är den senaste och ligger därför först
+
+    if(addModelToTwbar(mesh)) {
+        prepareMesh(mesh);
+        fprintf(stdout, "Loaded model: %s\n\n", mesh->name.c_str());
+    }
+    else {
+        removeMeshFromMeshlist(mesh);
+        fprintf(stdout, "Failed to load model: %s\n\n", mesh->name.c_str());
+    }
+}
 
 void prepareTweakBar()
 {
@@ -380,13 +462,12 @@ void prepareTweakBar()
         { "Y", TW_TYPE_FLOAT, offsetof(Vector, y), " Step=0.1 " },
         { "Z", TW_TYPE_FLOAT, offsetof(Vector, z), " Step=0.1 " }
     };
-    TwType TW_TYPE_VEC = TwDefineStruct("Vector", VectorMembers, 3, sizeof(Vector), NULL, NULL);
-    
+    TW_TYPE_VEC = TwDefineStruct("Vector", VectorMembers, 3, sizeof(Vector), NULL, NULL);
+
     enum Projection {Perspective, Frustum, Ortographic};
     TwEnumVal projectionEV[] = { {Perspective, "Perspective"}, {Frustum, "Frustum"}, {Ortographic, "Ortographic"} };
     TwType TW_TYPE_PROJECTION = TwDefineEnum("TW_TYPE_PROJECTION", projectionEV, 3);
     
-    TwBar *bar;// Pointer to a tweak bar
     bar = TwNewBar("TweakBar");
     TwDefine(" TweakBar label='Settings' ");
     TwDefine(" TweakBar size='200 400' color='96 216 224' ");
@@ -407,21 +488,19 @@ void prepareTweakBar()
     
     //Load Model stuff
     
-    
-    TwAddVarRW(bar, "modelNameInput", TW_TYPE_CSSTRING(sizeof(test)), test, " label='test' ");
+    TwAddButton(bar, NULL, NULL, NULL, " label='Load a model'");
+    TwAddVarRW(bar, "modelNameInput", TW_TYPE_CSSTRING(sizeof(loadModelName)), loadModelName, " label='Model Name' ");
+    TwAddButton(bar, NULL, TwLoadModel, NULL, " label='Load '");
     
     //Add Model controls
     Mesh* mesh = meshList;
     while (mesh != NULL)
     {
-        TwAddVarRW(bar, NULL, TW_TYPE_QUAT4F, &mesh->Quaternion, (" label='Object Rotation' Group='" + mesh->name + "' opened=false help='Change the object rotation.' ").c_str());
-        TwAddVarRW(bar, NULL, TW_TYPE_VEC, &mesh->scale, (" label='Object Scale' Group='" + mesh->name + "' opened=false help='Change the object sacle.' ").c_str());
-        TwAddVarRW(bar, NULL, TW_TYPE_VEC, &mesh->translation, (" label='Object Translation' Group='" + mesh->name + "' opened=false help='Change the object translation.' ").c_str());
-        TwAddSeparator(bar, NULL, (" Group='"+ mesh->name +"' ").c_str());
-        TwDefine((" TweakBar/" + mesh->name + " Group='Objects' ").c_str()); //to group all the objects together
-        
+        addModelToTwbar(mesh);
         mesh = mesh->next;
     }
+    
+    TwDefine(" TweakBar/Models opened=false "); //make the model group closed
 }
 
 int main(int argc, char **argv)
