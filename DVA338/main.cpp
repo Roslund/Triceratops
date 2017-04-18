@@ -11,6 +11,7 @@
 #include <OpenGL/gl3ext.h>
 #include "math.h"
 #include "AntTweakBar.h"
+#include <stdlib.h>
 
 int screen_width = 1024;
 int screen_height = 768;
@@ -36,118 +37,118 @@ Matrix V, P, PV;
 
 
 void prepareShaderProgram(const char ** vs_src, const char ** fs_src) {
-	GLint success = GL_FALSE;
-
-	shprg = glCreateProgram();
-
-	GLuint vs = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vs, 1, vs_src, NULL);
-	glCompileShader(vs);
-	glGetShaderiv(vs, GL_COMPILE_STATUS, &success);
-	if (!success) printf("Error in vertex shader!\n");
-	else printf("Vertex shader compiled successfully!\n");
-
-	GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fs, 1, fs_src, NULL);
-	glCompileShader(fs);
-	glGetShaderiv(fs, GL_COMPILE_STATUS, &success);
-	if (!success) printf("Error in fragment shader!\n");
-	else printf("Fragment shader compiled successfully!\n");
-
-	glAttachShader(shprg, vs);
-	glAttachShader(shprg, fs);
-	glLinkProgram(shprg);
-	GLint isLinked = GL_FALSE;
-	glGetProgramiv(shprg, GL_LINK_STATUS, &isLinked);
-	if (!isLinked) printf("Link error in shader program!\n");
-	else printf("Shader program linked successfully!\n");
+    GLint success = GL_FALSE;
+    
+    shprg = glCreateProgram();
+    
+    GLuint vs = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vs, 1, vs_src, NULL);
+    glCompileShader(vs);
+    glGetShaderiv(vs, GL_COMPILE_STATUS, &success);
+    if (!success) printf("Error in vertex shader!\n");
+    else printf("Vertex shader compiled successfully!\n");
+    
+    GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fs, 1, fs_src, NULL);
+    glCompileShader(fs);
+    glGetShaderiv(fs, GL_COMPILE_STATUS, &success);
+    if (!success) printf("Error in fragment shader!\n");
+    else printf("Fragment shader compiled successfully!\n");
+    
+    glAttachShader(shprg, vs);
+    glAttachShader(shprg, fs);
+    glLinkProgram(shprg);
+    GLint isLinked = GL_FALSE;
+    glGetProgramiv(shprg, GL_LINK_STATUS, &isLinked);
+    if (!isLinked) printf("Link error in shader program!\n");
+    else printf("Shader program linked successfully!\n");
 }
 
 void prepareMesh(Mesh *mesh) {
-	int sizeVerts = mesh->nv * 3 * sizeof(float);
-	int sizeCols  = mesh->nv * 3 * sizeof(float);
-	int sizeTris = mesh->nt * 3 * sizeof(int);
-	
-	// For storage of state and other buffer objects needed for vertex specification
+    int sizeVerts = mesh->nv * 3 * sizeof(float);
+    int sizeCols  = mesh->nv * 3 * sizeof(float);
+    int sizeTris = mesh->nt * 3 * sizeof(int);
+    
+    // For storage of state and other buffer objects needed for vertex specification
     glGenVertexArrays(1, &mesh->vao);
     glBindVertexArray(mesh->vao);
-
-	// Allocate VBO and load mesh data (vertices and normals)
-	glGenBuffers(1, &mesh->vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, mesh->vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeVerts + sizeCols, NULL, GL_STATIC_DRAW);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeVerts, (void *)mesh->vertices);
-	glBufferSubData(GL_ARRAY_BUFFER, sizeVerts, sizeCols, (void *)mesh->vnorms);
-
-	// Allocate index buffer and load mesh indices
-	glGenBuffers(1, &mesh->ibo);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->ibo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeTris, (void *)mesh->triangles, GL_STATIC_DRAW);
-
-	// Define the format of the vertex data
-	GLint vPos = glGetAttribLocation(shprg, "vPos");
-	glEnableVertexAttribArray(vPos);
-	glVertexAttribPointer(vPos, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-
-	// Define the format of the vertex data 
-	GLint vNorm = glGetAttribLocation(shprg, "vNorm");
-	glEnableVertexAttribArray(vNorm);
-	glVertexAttribPointer(vNorm, 3, GL_FLOAT, GL_FALSE, 0, (void *)(mesh->nv * 3 *sizeof(float)));
-
+    
+    // Allocate VBO and load mesh data (vertices and normals)
+    glGenBuffers(1, &mesh->vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeVerts + sizeCols, NULL, GL_STATIC_DRAW);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeVerts, (void *)mesh->vertices);
+    glBufferSubData(GL_ARRAY_BUFFER, sizeVerts, sizeCols, (void *)mesh->vnorms);
+    
+    // Allocate index buffer and load mesh indices
+    glGenBuffers(1, &mesh->ibo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->ibo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeTris, (void *)mesh->triangles, GL_STATIC_DRAW);
+    
+    // Define the format of the vertex data
+    GLint vPos = glGetAttribLocation(shprg, "vPos");
+    glEnableVertexAttribArray(vPos);
+    glVertexAttribPointer(vPos, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+    
+    // Define the format of the vertex data
+    GLint vNorm = glGetAttribLocation(shprg, "vNorm");
+    glEnableVertexAttribArray(vNorm);
+    glVertexAttribPointer(vNorm, 3, GL_FLOAT, GL_FALSE, 0, (void *)(mesh->nv * 3 *sizeof(float)));
+    
     glBindVertexArray(0);
 }
 
 void renderMesh(Mesh *mesh) {
-	
-	// Assignment 1: Apply the transforms from local mesh coordinates to world coordinates here
-	// Combine it with the viewing transform that is passed to the shader below
+    
+    // Assignment 1: Apply the transforms from local mesh coordinates to world coordinates here
+    // Combine it with the viewing transform that is passed to the shader below
     Matrix W, VW;
     /*
-    //The old way
-    W = MatMatMul(rotationZ(mesh->rotation.z), scale(mesh->scale));
-    W = MatMatMul(rotationY(mesh->rotation.y), W);
-    W = MatMatMul(rotationX(mesh->rotation.x), W);
-    W = MatMatMul(translate(mesh->translation.x, mesh->translation.y, mesh->translation.z), W);
+     //The old way
+     W = MatMatMul(rotationZ(mesh->rotation.z), scale(mesh->scale));
+     W = MatMatMul(rotationY(mesh->rotation.y), W);
+     W = MatMatMul(rotationX(mesh->rotation.x), W);
+     W = MatMatMul(translate(mesh->translation.x, mesh->translation.y, mesh->translation.z), W);
      */
     
     //the new way
     W = MatMatMul(rotationQuaternion(mesh->Quaternion), scale(mesh->scale));
     W = MatMatMul(translate(mesh->translation.x, mesh->translation.y, mesh->translation.z), W);
-
+    
     
     VW = MatMatMul(PV, W);
     
-	// Pass the viewing transform to the shader
-	GLint loc_PV = glGetUniformLocation(shprg, "PV"); //Why "PV"???
-	glUniformMatrix4fv(loc_PV, 1, GL_FALSE, VW.e);
-
-	// Select current resources
+    // Pass the viewing transform to the shader
+    GLint loc_PV = glGetUniformLocation(shprg, "PV"); //Why "PV"???
+    glUniformMatrix4fv(loc_PV, 1, GL_FALSE, VW.e);
+    
+    // Select current resources
     glBindVertexArray(mesh->vao);
-	
-	// To accomplish wireframe rendering (can be removed to get filled triangles)
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    
+    // To accomplish wireframe rendering (can be removed to get filled triangles)
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glEnable(GL_DEPTH_TEST); ///Needed to get Z-buffer/depth for assignment 1.3
     
-	// Draw all triangles
-	glDrawElements(GL_TRIANGLES, mesh->nt * 3, GL_UNSIGNED_INT, NULL);
+    // Draw all triangles
+    glDrawElements(GL_TRIANGLES, mesh->nt * 3, GL_UNSIGNED_INT, NULL);
     
     glBindVertexArray(0);
 }
 
 void display(void) {
-	Mesh *mesh;
-	
+    Mesh *mesh;
+    
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		
-	// Assignment 1: Calculate the transform to view coordinates yourself
+    
+    // Assignment 1: Calculate the transform to view coordinates yourself
     V = translate(-cam.position.x, -cam.position.y, -cam.position.z);
     V = MatMatMul(rotationX(-cam.rotation.x), V);
     V = MatMatMul(rotationY(-cam.rotation.y), V);
     V = MatMatMul(rotationZ(-cam.rotation.z), V);
     
-	// Assignment 1: Calculate the projection transform yourself 	
-	// The matrix P should be calculated from camera parameters
+    // Assignment 1: Calculate the projection transform yourself
+    // The matrix P should be calculated from camera parameters
     ///Should we relly caluclate P here? seams uneasseary to do it everytime something changes
     //This checks if we use paralell or perspective projection
     if (projection == Perspective)
@@ -163,23 +164,23 @@ void display(void) {
         P = generateOrthographicProjectionMatrix(screen_width, screen_height, cam.nearPlane, cam.farPlane, cam.fov);
     }
     
-	// This finds the combined view-projection matrix
-	PV = MatMatMul(P, V);
-
-	// Select the shader program to be used during rendering
-	glUseProgram(shprg);
-
-	// Render all meshes in the scene
-	mesh = meshList;
-		
-	while (mesh != NULL)
+    // This finds the combined view-projection matrix
+    PV = MatMatMul(P, V);
+    
+    // Select the shader program to be used during rendering
+    glUseProgram(shprg);
+    
+    // Render all meshes in the scene
+    mesh = meshList;
+    
+    while (mesh != NULL)
     {
-		renderMesh(mesh);
-		mesh = mesh->next;
-	}
-
+        renderMesh(mesh);
+        mesh = mesh->next;
+    }
+    
     TwDraw();
-	//glFlush();
+    //glFlush();
     
     // Present frame buffer
     glutSwapBuffers();
@@ -189,9 +190,9 @@ void display(void) {
 }
 
 void changeSize(int w, int h) {
-	screen_width = w;
-	screen_height = h;
-	glViewport(0, 0, screen_width, screen_height);
+    screen_width = w;
+    screen_height = h;
+    glViewport(0, 0, screen_width, screen_height);
     
     TwWindowSize(screen_width, screen_height); /// Send the new window size to AntTweakBar
 }
@@ -203,8 +204,8 @@ void keypress(unsigned char key, int x, int y) {
     
     TwEventKeyboardGLUT(key, x, y);
     
-	switch(key) {
-    case '!':
+    switch(key) {
+        case '!':
             if (TweakBarVisible) {
                 TwDefine(" TweakBar visible=false ");
                 TwDefine(" TW_HELP visible=false ");
@@ -215,122 +216,122 @@ void keypress(unsigned char key, int x, int y) {
                 TweakBarVisible = 1;
             }
             break;
-    case 'a': //Left
+        case 'a': //Left
             cam.position = Add(cam.position, Homogenize(MatVecMul(rotation, {-0.2f, 0, 0})));
             break;
-    case 'd': //right
+        case 'd': //right
             cam.position = Add(cam.position, Homogenize(MatVecMul(rotation, {0.2f, 0, 0})));
             break;
-    case 'w': //forward
-        cam.position = Add(cam.position, Homogenize(MatVecMul(rotation, {0, 0, -0.2f})));
-        break;
-    case 's': //backwars
-        cam.position = Add(cam.position, Homogenize(MatVecMul(rotation, {0, 0, 0.2f})));
-        break;
-    case 'q': //up
-        cam.position = Add(cam.position, Homogenize(MatVecMul(rotation, {0, -0.2f, 0})));
-        break;
-    case 'e': //down
-        cam.position = Add(cam.position, Homogenize(MatVecMul(rotation, {0, 0.2f, 0})));
-        break;
-    case 'A': //Left
-        cam.position = Add(cam.position, Homogenize(MatVecMul(rotation, {-0.9f, 0, 0})));
-        break;
-    case 'D': //right
-        cam.position = Add(cam.position, Homogenize(MatVecMul(rotation, {0.9f, 0, 0})));
-        break;
-    case 'W': //forward
-        cam.position = Add(cam.position, Homogenize(MatVecMul(rotation, {0, 0, -0.9f})));
-        break;
-    case 'S': //backwars
-        cam.position = Add(cam.position, Homogenize(MatVecMul(rotation, {0, 0, 0.9f})));
-        break;
-    case 'Q': //up
-        cam.position = Add(cam.position, Homogenize(MatVecMul(rotation, {0, -0.9f, 0})));
-        break;
-    case 'E': //down
-        cam.position = Add(cam.position, Homogenize(MatVecMul(rotation, {0, 0.9f, 0})));
-        break;
-    case 'x':
-        cam.position.x -= 0.2f;
-        break;
-    case 'X':
-        cam.position.x += 0.2f;
-        break;
-    case 'y':
-        cam.position.y -= 0.2f;
-        break;
-    case 'Y':
-        cam.position.y += 0.2f;
-        break;
-    case 'z':
-        cam.position.z -= 0.2f;
-        break;
-    case 'Z':
-        cam.position.z += 0.2f;
-        break;
-    case 'k': //look down
-        cam.rotation = Add(cam.rotation, Homogenize(MatVecMul(rotation, {-0.1f, 0, 0})));
-        break;
-    case 'i': //look up
-        cam.rotation = Add(cam.rotation, Homogenize(MatVecMul(rotation, {0.1f, 0, 0})));
-        break;
-    case 'l': //look right
-        cam.rotation = Add(cam.rotation, Homogenize(MatVecMul(rotation, {0, -0.1f, 0})));
-        break;
-    case 'j': //look left
-        cam.rotation = Add(cam.rotation, Homogenize(MatVecMul(rotation, {0, 0.1f, 0})));
-        break;
-    case 'u': //rotate counterclok
-        cam.rotation = Add(cam.rotation, Homogenize(MatVecMul(rotation, {0, 0, -0.1f})));
-        break;
-    case 'o': //rotate clock
-        cam.rotation = Add(cam.rotation, Homogenize(MatVecMul(rotation, {0, 0, 0.1f})));
-        break;
-    case 'K': //look down
-        cam.rotation = Add(cam.rotation, Homogenize(MatVecMul(rotation, {-0.5f, 0, 0})));
-        break;
-    case 'I': //look up
-        cam.rotation = Add(cam.rotation, Homogenize(MatVecMul(rotation, {0.5f, 0, 0})));
-        break;
-    case 'L': //look right
-        cam.rotation = Add(cam.rotation, Homogenize(MatVecMul(rotation, {0, -0.5f, 0})));
-        break;
-    case 'J': //look left
-        cam.rotation = Add(cam.rotation, Homogenize(MatVecMul(rotation, {0, 0.5f, 0})));
-        break;
-    case 'U': //rotate counterclok
-        cam.rotation = Add(cam.rotation, Homogenize(MatVecMul(rotation, {0, 0, -0.5f})));
-        break;
-    case 'O': //rotate clock
-        cam.rotation = Add(cam.rotation, Homogenize(MatVecMul(rotation, {0, 0, 0.5f})));
-        break;
-	}
+        case 'w': //forward
+            cam.position = Add(cam.position, Homogenize(MatVecMul(rotation, {0, 0, -0.2f})));
+            break;
+        case 's': //backwars
+            cam.position = Add(cam.position, Homogenize(MatVecMul(rotation, {0, 0, 0.2f})));
+            break;
+        case 'q': //up
+            cam.position = Add(cam.position, Homogenize(MatVecMul(rotation, {0, -0.2f, 0})));
+            break;
+        case 'e': //down
+            cam.position = Add(cam.position, Homogenize(MatVecMul(rotation, {0, 0.2f, 0})));
+            break;
+        case 'A': //Left
+            cam.position = Add(cam.position, Homogenize(MatVecMul(rotation, {-0.9f, 0, 0})));
+            break;
+        case 'D': //right
+            cam.position = Add(cam.position, Homogenize(MatVecMul(rotation, {0.9f, 0, 0})));
+            break;
+        case 'W': //forward
+            cam.position = Add(cam.position, Homogenize(MatVecMul(rotation, {0, 0, -0.9f})));
+            break;
+        case 'S': //backwars
+            cam.position = Add(cam.position, Homogenize(MatVecMul(rotation, {0, 0, 0.9f})));
+            break;
+        case 'Q': //up
+            cam.position = Add(cam.position, Homogenize(MatVecMul(rotation, {0, -0.9f, 0})));
+            break;
+        case 'E': //down
+            cam.position = Add(cam.position, Homogenize(MatVecMul(rotation, {0, 0.9f, 0})));
+            break;
+        case 'x':
+            cam.position.x -= 0.2f;
+            break;
+        case 'X':
+            cam.position.x += 0.2f;
+            break;
+        case 'y':
+            cam.position.y -= 0.2f;
+            break;
+        case 'Y':
+            cam.position.y += 0.2f;
+            break;
+        case 'z':
+            cam.position.z -= 0.2f;
+            break;
+        case 'Z':
+            cam.position.z += 0.2f;
+            break;
+        case 'k': //look down
+            cam.rotation = Add(cam.rotation, Homogenize(MatVecMul(rotation, {-0.1f, 0, 0})));
+            break;
+        case 'i': //look up
+            cam.rotation = Add(cam.rotation, Homogenize(MatVecMul(rotation, {0.1f, 0, 0})));
+            break;
+        case 'l': //look right
+            cam.rotation = Add(cam.rotation, Homogenize(MatVecMul(rotation, {0, -0.1f, 0})));
+            break;
+        case 'j': //look left
+            cam.rotation = Add(cam.rotation, Homogenize(MatVecMul(rotation, {0, 0.1f, 0})));
+            break;
+        case 'u': //rotate counterclok
+            cam.rotation = Add(cam.rotation, Homogenize(MatVecMul(rotation, {0, 0, -0.1f})));
+            break;
+        case 'o': //rotate clock
+            cam.rotation = Add(cam.rotation, Homogenize(MatVecMul(rotation, {0, 0, 0.1f})));
+            break;
+        case 'K': //look down
+            cam.rotation = Add(cam.rotation, Homogenize(MatVecMul(rotation, {-0.5f, 0, 0})));
+            break;
+        case 'I': //look up
+            cam.rotation = Add(cam.rotation, Homogenize(MatVecMul(rotation, {0.5f, 0, 0})));
+            break;
+        case 'L': //look right
+            cam.rotation = Add(cam.rotation, Homogenize(MatVecMul(rotation, {0, -0.5f, 0})));
+            break;
+        case 'J': //look left
+            cam.rotation = Add(cam.rotation, Homogenize(MatVecMul(rotation, {0, 0.5f, 0})));
+            break;
+        case 'U': //rotate counterclok
+            cam.rotation = Add(cam.rotation, Homogenize(MatVecMul(rotation, {0, 0, -0.5f})));
+            break;
+        case 'O': //rotate clock
+            cam.rotation = Add(cam.rotation, Homogenize(MatVecMul(rotation, {0, 0, 0.5f})));
+            break;
+    }
     
     
-	glutPostRedisplay();
+    glutPostRedisplay();
 }
 
 void init(void) {
-	// Compile and link the given shader program (vertex shader and fragment shader)
-	prepareShaderProgram(vs_n2c_src, fs_ci_src); 
-
-	// Setup OpenGL buffers for rendering of the meshes
-	Mesh * mesh = meshList;
-	while (mesh != NULL) {
-		prepareMesh(mesh);
-		mesh = mesh->next;
-	}	
+    // Compile and link the given shader program (vertex shader and fragment shader)
+    prepareShaderProgram(vs_n2c_src, fs_ci_src);
+    
+    // Setup OpenGL buffers for rendering of the meshes
+    Mesh * mesh = meshList;
+    while (mesh != NULL) {
+        prepareMesh(mesh);
+        mesh = mesh->next;
+    }
 }
 
-void cleanUp(void) {	
-	printf("Running cleanUp function... ");
-	// Free openGL resources
-	// ...
-
-	// Free meshes
-	// ...
-	printf("Done!\n\n");
+void cleanUp(void) {
+    printf("Running cleanUp function... ");
+    // Free openGL resources
+    // ...
+    
+    // Free meshes
+    // ...
+    printf("Done!\n\n");
 }
 
 // Include data for some triangle meshes (hard coded in struct variables)
@@ -349,6 +350,8 @@ void TW_CALL TwResetCameraRotation(void *clientData)
     cam.rotation.y = 0;
     cam.rotation.z = 0;
 }
+
+char test[64] = "a string allocated dynamically";
 
 void prepareTweakBar()
 {
@@ -391,18 +394,23 @@ void prepareTweakBar()
     TwDefine(" TW_HELP visible=false ");  // help bar is hidden
     TwDefine(" TweakBar iconifiable=false ");
     TwDefine(" TweakBar visible=false ");
-
+    
     //Camera stuff
     TwAddVarRW(bar, "CamPosition", TW_TYPE_VEC, &cam.position, " label='Camera Position' Group='Camera' help='Change the camera position.' ");
     TwAddVarRW(bar, "CamRotation", TW_TYPE_VEC, &cam.rotation, " label='Camera rotation' Group='Camera' opened=false help='Change the camera rotation.' ");
     TwAddButton(bar, "ResetRotation", TwResetCameraRotation, NULL, " label='Reset Rotation' key=r Group='Camera' help='Reset camera rotation to 0 0 0.'");
-    TwAddVarRW(bar, "CamFOV", TW_TYPE_DOUBLE, &cam.fov, " label='Fov' Group='Camera' help='Change the camera Feeld of view.' ");
+    TwAddVarRW(bar, "CamFOV", TW_TYPE_DOUBLE, &cam.fov, " label='Fov' Group='Camera' Max=180 Min=-180 help='Change the camera Feeld of view.' ");
     TwAddVarRW(bar, "CamNear", TW_TYPE_DOUBLE, &cam.nearPlane, " label='Near Plane' Group='Camera' Step=0.1 Min=0.1 ");
     TwAddVarRW(bar, "CamFar", TW_TYPE_DOUBLE, &cam.farPlane, " label='Far Plane' Group='Camera' Step=1 ");
     TwAddVarRW(bar, "Projection", TW_TYPE_PROJECTION, &projection, " label='Projection' Group='Camera' key=p help='Toggle Paralell mode.' ");
     TwAddSeparator(bar, NULL, " Group='Camera' ");
     
-    //Add object controls
+    //Load Model stuff
+    
+    
+    TwAddVarRW(bar, "modelNameInput", TW_TYPE_CSSTRING(sizeof(test)), test, " label='test' ");
+    
+    //Add Model controls
     Mesh* mesh = meshList;
     while (mesh != NULL)
     {
@@ -419,37 +427,37 @@ void prepareTweakBar()
 int main(int argc, char **argv)
 {
     
-	// Setup freeGLUT ///Probably GLUT and not free glut, since mac...
-	glutInit(&argc, argv);
+    // Setup freeGLUT ///Probably GLUT and not free glut, since mac...
+    glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DEPTH | GLUT_SINGLE | GLUT_RGB | GLUT_3_2_CORE_PROFILE); /// GLUT_DEPTH is Needed to get Z-buffer/depth for assignment 1.3
-	glutInitWindowSize(screen_width, screen_height);
-	glutCreateWindow("DVA338 Programming Assignments");
-	glutDisplayFunc(display);
-	glutReshapeFunc(changeSize);
-	glutKeyboardFunc(keypress);
+    glutInitWindowSize(screen_width, screen_height);
+    glutCreateWindow("DVA338 Programming Assignments");
+    glutDisplayFunc(display);
+    glutReshapeFunc(changeSize);
+    glutKeyboardFunc(keypress);
     
-
-	// Output OpenGL version info
-	fprintf(stdout, "OpenGL version: %s\n", (const char *)glGetString(GL_VERSION));
-	fprintf(stdout, "OpenGL vendor: %s\n\n", glGetString(GL_VENDOR));
     
-
-	// Insert the 3D models you want in your scene here in a linked list of meshes
-	// Note that "meshList" is a pointer to the first mesh and new meshes are added to the front of the list	
-	//insertModel(&meshList, "Cow", cow.nov, cow.verts, cow.nof, cow.faces, 20.0);
-	insertModel(&meshList, "Triceratops", triceratops.nov, triceratops.verts, triceratops.nof, triceratops.faces, 3.0);
-	//insertModel(&meshList, bunny.nov, bunny.verts, bunny.nof, bunny.faces, 60.0);
-	//insertModel(&meshList, cube.nov, cube.verts, cube.nof, cube.faces, 5.0);
-	//insertModel(&meshList, frog.nov, frog.verts, frog.nof, frog.faces, 2.5);
-	//insertModel(&meshList, knot.nov, knot.verts, knot.nof, knot.faces, 1.0);
-	//insertModel(&meshList, sphere.nov, sphere.verts, sphere.nof, sphere.faces, 12.0);
-	//insertModel(&meshList, teapot.nov, teapot.verts, teapot.nof, teapot.faces, 0.1);
-	
-	prepareTweakBar();
+    // Output OpenGL version info
+    fprintf(stdout, "OpenGL version: %s\n", (const char *)glGetString(GL_VERSION));
+    fprintf(stdout, "OpenGL vendor: %s\n\n", glGetString(GL_VENDOR));
     
-	init();
-	glutMainLoop();
-
-	cleanUp();	
-	return 0;
+    
+    // Insert the 3D models you want in your scene here in a linked list of meshes
+    // Note that "meshList" is a pointer to the first mesh and new meshes are added to the front of the list
+    //insertModel(&meshList, "Cow", cow.nov, cow.verts, cow.nof, cow.faces, 20.0);
+    insertModel(&meshList, "Triceratops", triceratops.nov, triceratops.verts, triceratops.nof, triceratops.faces, 3.0);
+    //insertModel(&meshList, bunny.nov, bunny.verts, bunny.nof, bunny.faces, 60.0);
+    //insertModel(&meshList, cube.nov, cube.verts, cube.nof, cube.faces, 5.0);
+    //insertModel(&meshList, frog.nov, frog.verts, frog.nof, frog.faces, 2.5);
+    //insertModel(&meshList, knot.nov, knot.verts, knot.nof, knot.faces, 1.0);
+    //insertModel(&meshList, sphere.nov, sphere.verts, sphere.nof, sphere.faces, 12.0);
+    //insertModel(&meshList, teapot.nov, teapot.verts, teapot.nof, teapot.faces, 0.1);
+    
+    prepareTweakBar();
+    
+    init();
+    glutMainLoop();
+    
+    cleanUp();	
+    return 0;
 }

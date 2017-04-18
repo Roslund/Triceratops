@@ -3,36 +3,36 @@
 
 
 void insertModel(Mesh **list, std::string name, int nv, float * vArr, int nt, int * tArr, float scale) {
-	Mesh * mesh = (Mesh *) malloc(sizeof(Mesh));
+    Mesh * mesh = (Mesh *) malloc(sizeof(Mesh));
     mesh->name = name;
     mesh->scale = {1, 1, 1};
     mesh->rotation = {0, 0, 0}; //Not really used anymore
     mesh->Quaternion = {0, 0, 0, 0};
     mesh->translation = {0, 0, 0};
-	mesh->nv = nv;
-	mesh->nt = nt;	
-	mesh->vertices = (Vector *) malloc(nv * sizeof(Vector));
-	mesh->vnorms = (Vector *)malloc(nv * sizeof(Vector));
-	mesh->triangles = (Triangle *) malloc(nt * sizeof(Triangle));
-	
+    mesh->nv = nv;
+    mesh->nt = nt;
+    mesh->vertices = (Vector *) malloc(nv * sizeof(Vector));
+    mesh->vnorms = (Vector *)malloc(nv * sizeof(Vector));
+    mesh->triangles = (Triangle *) malloc(nt * sizeof(Triangle));
     
-	// set mesh vertices
-	for (int i = 0; i < nv; i++) {
-		mesh->vertices[i].x = vArr[i*3] * scale;
-		mesh->vertices[i].y = vArr[i*3+1] * scale;
-		mesh->vertices[i].z = vArr[i*3+2] * scale;
-	}
-
-	// set mesh triangles
-	for (int i = 0; i < nt; i++) {
-		mesh->triangles[i].vInds[0] = tArr[i*3];
-		mesh->triangles[i].vInds[1] = tArr[i*3+1];
-		mesh->triangles[i].vInds[2] = tArr[i*3+2];
-	}
-
-	// Assignment 1: 
-	// Calculate and store suitable vertex normals for the mesh here.
-	
+    
+    // set mesh vertices
+    for (int i = 0; i < nv; i++) {
+        mesh->vertices[i].x = vArr[i*3] * scale;
+        mesh->vertices[i].y = vArr[i*3+1] * scale;
+        mesh->vertices[i].z = vArr[i*3+2] * scale;
+    }
+    
+    // set mesh triangles
+    for (int i = 0; i < nt; i++) {
+        mesh->triangles[i].vInds[0] = tArr[i*3];
+        mesh->triangles[i].vInds[1] = tArr[i*3+1];
+        mesh->triangles[i].vInds[2] = tArr[i*3+2];
+    }
+    
+    // Assignment 1:
+    // Calculate and store suitable vertex normals for the mesh here.
+    
     Vector* tNorms = (Vector *)malloc(nt * sizeof(Vector));
     
     ///We start by calulating all triangle normals
@@ -43,7 +43,7 @@ void insertModel(Mesh **list, std::string name, int nv, float * vArr, int nt, in
         tNorms[i] = Normalize(CrossProduct(a, b));
     }
     
-	for (int i = 0; i < nv; i++)
+    for (int i = 0; i < nv; i++)
     {
         Vector sum;
         int nTrigForVer = 0;
@@ -61,12 +61,12 @@ void insertModel(Mesh **list, std::string name, int nv, float * vArr, int nt, in
         sum.y /= float(nTrigForVer);
         sum.z /= float(nTrigForVer);
         mesh->vnorms[i] = Normalize(sum);
-
-	}
+        
+    }
     
     ///now that we are done with the vertex normals we free the triangle normals since we don't need them
     free(tNorms);
     
-	mesh->next = *list;
-	*list = mesh;	
+    mesh->next = *list;
+    *list = mesh;
 }

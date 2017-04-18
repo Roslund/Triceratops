@@ -5,18 +5,18 @@ typedef struct { float x, y, z; } Vector;
 typedef struct { float x, y, z, w; } HomVector;
 
 /* Column-major order are used for the matrices here to be compatible with OpenGL.
-** The indices used to access elements in the matrices are shown below.
-**  _                _
-** |                  |
-** |   0   4   8  12  |
-** |                  |
-** |   1   5   9  13  |
-** |                  |
-** |   2   6  10  14  |
-** |                  |
-** |   3   7  11  15  |
-** |_                _|
-*/
+ ** The indices used to access elements in the matrices are shown below.
+ **  _                _
+ ** |                  |
+ ** |   0   4   8  12  |
+ ** |                  |
+ ** |   1   5   9  13  |
+ ** |                  |
+ ** |   2   6  10  14  |
+ ** |                  |
+ ** |   3   7  11  15  |
+ ** |_                _|
+ */
 typedef struct matrix { float e[16]; } Matrix;
 
 Matrix rotationQuaternion(HomVector q);
