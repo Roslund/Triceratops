@@ -423,7 +423,7 @@ void TW_CALL TwLoadModel(void *clientData) {
     else if (strcasecmp(loadModelName,"knot")==0)
         insertModel(&meshList, "Knot", knot.nov, knot.verts, knot.nof, knot.faces, 1.0);
     else if (strcasecmp(loadModelName,"sphere")==0)
-        insertModel(&meshList, "Sphere", sphere.nov, sphere.verts, sphere.nof, sphere.faces, 12.0);
+        insertModel(&meshList, "Sphere", sphere.nov, sphere.verts, sphere.nof, sphere.faces, 1.0);
     else if (strcasecmp(loadModelName,"teapot")==0)
         insertModel(&meshList, "Teapot", teapot.nov, teapot.verts, teapot.nof, teapot.faces, 0.1);
     else if (strcasecmp(loadModelName,"triceratops")==0)

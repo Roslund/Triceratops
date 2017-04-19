@@ -13,6 +13,7 @@ void insertModel(Mesh **list, std::string name, int nv, float * vArr, int nt, in
     mesh->vertices = (Vector *) malloc(nv * sizeof(Vector));
     mesh->vnorms = (Vector *)malloc(nv * sizeof(Vector));
     mesh->triangles = (Triangle *) malloc(nt * sizeof(Triangle));
+    mesh->tnorms = (Vector *) malloc(nt * sizeof(Vector));
     
     
     // set mesh vertices
@@ -31,41 +32,25 @@ void insertModel(Mesh **list, std::string name, int nv, float * vArr, int nt, in
     
     // Assignment 1:
     // Calculate and store suitable vertex normals for the mesh here.
-    
-    Vector* tNorms = (Vector *)malloc(nt * sizeof(Vector));
-    
-    ///We start by calulating all triangle normals
-    for(int i = 0; i < nt; i++)
-    {
+
+    /// Calulating triangle normals
+    for(int i = 0; i < nt; i++) {
         Vector a = Subtract(mesh->vertices[mesh->triangles[i].vInds[1]], mesh->vertices[mesh->triangles[i].vInds[0]]);
         Vector b = Subtract(mesh->vertices[mesh->triangles[i].vInds[2]], mesh->vertices[mesh->triangles[i].vInds[0]]);
-        tNorms[i] = Normalize(CrossProduct(a, b));
+        mesh->tnorms[i] = Normalize(CrossProduct(a, b));
     }
     
-    for (int i = 0; i < nv; i++)
-    {
-        Vector sum;
-        int nTrigForVer = 0;
-        
-        for(int j = 0; j < nt; j++) ///loop thru all the triangles and check if one of thir corners is our vertex.
-        {
-            if ( (mesh->triangles[j].vInds[0] == i) || (mesh->triangles[j].vInds[1] == i) || (mesh->triangles[j].vInds[2] == i) )
-            {
-                sum = Add(sum, tNorms[j]); ///Sum the normals of all connected triangles
-                nTrigForVer++;
+    // Calculate vetex normals
+    for (int i = 0; i < nv; i++) {
+        for(int j = 0; j < nt; j++) {
+            if ( (mesh->triangles[j].vInds[0] == i) || (mesh->triangles[j].vInds[1] == i) || (mesh->triangles[j].vInds[2] == i) ) {
+                mesh->vnorms[i] = Add(mesh->vnorms[i], mesh->tnorms[j]);
+                Normalize(mesh->vnorms[i]);
             }
         }
-        
-        sum.x /= float(nTrigForVer);
-        sum.y /= float(nTrigForVer);
-        sum.z /= float(nTrigForVer);
-        mesh->vnorms[i] = Normalize(sum);
-        
     }
     
-    ///now that we are done with the vertex normals we free the triangle normals since we don't need them
-    free(tNorms);
-    
+    //Add it first in the mesh list
     mesh->next = *list;
     *list = mesh;
 }

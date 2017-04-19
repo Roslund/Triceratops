@@ -18,6 +18,7 @@ typedef struct _Mesh {
     Vector *vnorms;
     int nt;
     Triangle *triangles;
+    Vector *tnorms;
     struct _Mesh *next;
     
     unsigned int vbo, ibo, vao; // OpenGL handles for rendering
