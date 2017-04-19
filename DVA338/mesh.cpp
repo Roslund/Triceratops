@@ -15,7 +15,6 @@ void insertModel(Mesh **list, std::string name, int nv, float * vArr, int nt, in
     mesh->triangles = (Triangle *) malloc(nt * sizeof(Triangle));
     mesh->tnorms = (Vector *) malloc(nt * sizeof(Vector));
     
-    
     // set mesh vertices
     for (int i = 0; i < nv; i++) {
         mesh->vertices[i].x = vArr[i*3] * scale;
@@ -52,4 +51,35 @@ void insertModel(Mesh **list, std::string name, int nv, float * vArr, int nt, in
     //Add it first in the mesh list
     mesh->next = *list;
     *list = mesh;
+}
+
+void calculateBoundingSphere(Mesh* mesh)
+{
+    Vector min = mesh->vertices[0];
+    Vector max = mesh->vertices[0];
+    
+    for (int i = 0; i < mesh->nv; i++)
+    {
+        if(mesh->vertices[i].x < min.x)
+            min.x = mesh->vertices[i].x;
+        if(mesh->vertices[i].x > max.x)
+            max.x = mesh->vertices[i].x;
+        
+        if(mesh->vertices[i].y < min.y)
+            min.y = mesh->vertices[i].y;
+        if(mesh->vertices[i].y > max.y)
+            max.y = mesh->vertices[i].y;
+        
+        if(mesh->vertices[i].z < min.z)
+            min.z = mesh->vertices[i].z;
+        if(mesh->vertices[i].z > max.z)
+            max.z = mesh->vertices[i].z;
+    }
+    
+    Vector minToMax = Subtract(max, min);
+    mesh->boundingsphereRadious = Length(minToMax)/2.f;
+    
+    mesh->boundingsphereMidpoint.x = min.x + (minToMax.x/2.f);
+    mesh->boundingsphereMidpoint.y = min.y + (minToMax.y/2.f);
+    mesh->boundingsphereMidpoint.z = min.z + (minToMax.z/2.f);
 }

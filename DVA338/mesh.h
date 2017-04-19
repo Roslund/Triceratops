@@ -19,6 +19,8 @@ typedef struct _Mesh {
     int nt;
     Triangle *triangles;
     Vector *tnorms;
+    Vector boundingsphereMidpoint;
+    float boundingsphereRadious;
     struct _Mesh *next;
     
     unsigned int vbo, ibo, vao; // OpenGL handles for rendering
@@ -33,5 +35,6 @@ typedef struct _Camera {
 } Camera;
 
 void insertModel(Mesh ** objlist, std::string name, int nv, float * vArr, int nt, int * tArr, float scale = 1.0);
+void calculateBoundingSphere(Mesh* mesh);
 
 #endif
