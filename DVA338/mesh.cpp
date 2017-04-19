@@ -44,8 +44,7 @@ void insertModel(Mesh **list, std::string name, int nv, float * vArr, int nt, in
     for (int i = 0; i < nv; i++) {
         for(int j = 0; j < nt; j++) {
             if ( (mesh->triangles[j].vInds[0] == i) || (mesh->triangles[j].vInds[1] == i) || (mesh->triangles[j].vInds[2] == i) ) {
-                mesh->vnorms[i] = Add(mesh->vnorms[i], mesh->tnorms[j]);
-                Normalize(mesh->vnorms[i]);
+                mesh->vnorms[i] = Normalize(Add(mesh->vnorms[i], mesh->tnorms[j]));
             }
         }
     }

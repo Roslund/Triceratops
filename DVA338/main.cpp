@@ -29,7 +29,8 @@
 int screen_width = 1024;
 int screen_height = 768;
 
-Mesh *meshList = NULL; // Global pointer to linked list of triangle meshes
+Mesh* meshList = NULL; // Global pointer to linked list of triangle meshes
+Mesh* boundingSphere = NULL; //Global pointer to our boundingsphere mesh
 
 Camera cam = {{0,0,20}, {0,0,0}, 60, 0.1, 10000}; // Setup the global camera parameters
 
@@ -41,6 +42,7 @@ GLuint shprg; // Shader program id
 enum Projection {Perspective, Frustum, Ortographic};
 Projection projection = Perspective;
 bool TweakBarVisible = 0;
+bool drawboundingSphere = 1;
 
 TwBar *bar;// Pointer to a tweak bar
 TwType TW_TYPE_VEC;
@@ -124,25 +126,32 @@ void renderMesh(Mesh *mesh) {
     // Pass the viewing transform to the shader
     GLint loc_PV = glGetUniformLocation(shprg, "PV");
     glUniformMatrix4fv(loc_PV, 1, GL_FALSE, VW.e);
+    glUniform1i(glGetUniformLocation(shprg, "White"), 0);
     
     // Select current resources
     glBindVertexArray(mesh->vao);
     
     // To accomplish wireframe rendering (can be removed to get filled triangles)
-    if(mesh->name == "Sphere")
-    {
-        glUniform1i(glGetUniformLocation(shprg, "White"), 1);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    }
-    else
-    {
-        glUniform1i(glGetUniformLocation(shprg, "White"), 0);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    }
-    
-    
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
     // Draw all triangles
     glDrawElements(GL_TRIANGLES, mesh->nt * 3, GL_UNSIGNED_INT, NULL);
+    
+    if(drawboundingSphere)
+    {
+        //Calculate new VW
+        W = MatMatMul(translate(-3.f, 0.f, 0.f), scale({10.0f, 10.0f, 10.0f}));
+        VW = MatMatMul(VW, W);
+        
+        // Select current resources
+        glBindVertexArray(boundingSphere->vao);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        GLint loc_PV = glGetUniformLocation(shprg, "PV");
+        glUniformMatrix4fv(loc_PV, 1, GL_FALSE, VW.e);
+        glUniform1i(glGetUniformLocation(shprg, "White"), 1);
+        glDrawElements(GL_TRIANGLES, boundingSphere->nt * 3, GL_UNSIGNED_INT, NULL);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
     
     // Unselect resources
     glBindVertexArray(0);
@@ -349,6 +358,9 @@ void init(void) {
         prepareMesh(mesh);
         mesh = mesh->next;
     }
+    
+    // for bounding sphere as well;
+    prepareMesh(boundingSphere);
 }
 
 void cleanUp(void) {
@@ -423,7 +435,7 @@ void TW_CALL TwLoadModel(void *clientData) {
     else if (strcasecmp(loadModelName,"knot")==0)
         insertModel(&meshList, "Knot", knot.nov, knot.verts, knot.nof, knot.faces, 1.0);
     else if (strcasecmp(loadModelName,"sphere")==0)
-        insertModel(&meshList, "Sphere", sphere.nov, sphere.verts, sphere.nof, sphere.faces, 1.0);
+        insertModel(&meshList, "Sphere", sphere.nov, sphere.verts, sphere.nof, sphere.faces, 12.0);
     else if (strcasecmp(loadModelName,"teapot")==0)
         insertModel(&meshList, "Teapot", teapot.nov, teapot.verts, teapot.nof, teapot.faces, 0.1);
     else if (strcasecmp(loadModelName,"triceratops")==0)
@@ -494,6 +506,7 @@ void prepareTweakBar() {
     TwAddVarRW(bar, "CamNear", TW_TYPE_DOUBLE, &cam.nearPlane, " label='Near Plane' Group='Camera' Step=0.1 Min=0.1 ");
     TwAddVarRW(bar, "CamFar", TW_TYPE_DOUBLE, &cam.farPlane, " label='Far Plane' Group='Camera' Step=1 ");
     TwAddVarRW(bar, "Projection", TW_TYPE_PROJECTION, &projection, " label='Projection' Group='Camera' key=p help='Toggle Paralell mode.' ");
+    TwAddVarRW(bar, "BoundingSphere", TW_TYPE_BOOLCPP, &drawboundingSphere, " label='Bounding Sphere' Group='Camera' key=b ");
     TwAddSeparator(bar, NULL, " Group='Camera' ");
     
     //Load Model stuff
@@ -529,6 +542,8 @@ int main(int argc, char **argv) {
     fprintf(stdout, "OpenGL version: %s\n", (const char *)glGetString(GL_VERSION));
     fprintf(stdout, "OpenGL vendor: %s\n\n", glGetString(GL_VENDOR));
     
+    
+    insertModel(&boundingSphere, "boundingSphere", sphere.nov, sphere.verts, sphere.nof, sphere.faces, 1.0);
     
     // Insert the 3D models you want in your scene here in a linked list of meshes
     // Note that "meshList" is a pointer to the first mesh and new meshes are added to the front of the list
