@@ -1,17 +1,20 @@
 //#define _CRT_SECURE_NO_WARNINGS
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
+#include <stdlib.h>
+#include <fstream>
+#include <streambuf>
+#include <sstream>
 #include <stdio.h>
 #include <GLUT/GLUT.h>
 #include <OpenGL/OpenGL.h>
-#include "algebra.h"
-#include "shaders.h"
-#include "mesh.h"
 #include <OpenGL/gl3.h>
 #include <OpenGL/gl3ext.h>
 #include "math.h"
 #include "AntTweakBar.h"
-#include <stdlib.h>
+#include "algebra.h"
+#include "mesh.h"
+
 
 int screen_width = 1024;
 int screen_height = 768;
@@ -100,41 +103,43 @@ void prepareMesh(Mesh *mesh) {
     glBindVertexArray(0);
 }
 
-void renderMesh(Mesh *mesh) {
+void renderMesh(Mesh *mesh)
+{
+    glEnable(GL_DEPTH_TEST); ///Needed to get Z-buffer/depth for assignment 1.3
     
     // Assignment 1: Apply the transforms from local mesh coordinates to world coordinates here
     // Combine it with the viewing transform that is passed to the shader below
     Matrix W, VW;
-    /*
-     //The old way
-     W = MatMatMul(rotationZ(mesh->rotation.z), scale(mesh->scale));
-     W = MatMatMul(rotationY(mesh->rotation.y), W);
-     W = MatMatMul(rotationX(mesh->rotation.x), W);
-     W = MatMatMul(translate(mesh->translation.x, mesh->translation.y, mesh->translation.z), W);
-     */
-    
-    //the new way
+
     W = MatMatMul(rotationQuaternion(mesh->Quaternion), scale(mesh->scale));
     W = MatMatMul(translate(mesh->translation.x, mesh->translation.y, mesh->translation.z), W);
-    
     
     VW = MatMatMul(PV, W);
     
     // Pass the viewing transform to the shader
-    GLint loc_PV = glGetUniformLocation(shprg, "PV"); //Why "PV"???
+    GLint loc_PV = glGetUniformLocation(shprg, "PV");
     glUniformMatrix4fv(loc_PV, 1, GL_FALSE, VW.e);
     
     // Select current resources
     glBindVertexArray(mesh->vao);
     
     // To accomplish wireframe rendering (can be removed to get filled triangles)
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    glEnable(GL_DEPTH_TEST); ///Needed to get Z-buffer/depth for assignment 1.3
+    if(mesh->name == "Sphere")
+    {
+        glUniform1i(glGetUniformLocation(shprg, "White"), 1);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    }
+    else
+    {
+        glUniform1i(glGetUniformLocation(shprg, "White"), 0);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
+    
     
     // Draw all triangles
     glDrawElements(GL_TRIANGLES, mesh->nt * 3, GL_UNSIGNED_INT, NULL);
     
+    // Unselect resources
     glBindVertexArray(0);
 }
 
@@ -314,7 +319,24 @@ void keypress(unsigned char key, int x, int y) {
 
 void init(void) {
     // Compile and link the given shader program (vertex shader and fragment shader)
-    prepareShaderProgram(vs_n2c_src, fs_ci_src);
+    std::ifstream f;
+    std::stringstream buf;
+    f.open("/Users/enari/Documents/Repos/DVA338/DVA338/DVA338/shaders/n2c.vert");
+    buf << f.rdbuf();
+    
+    std::string vertShaderStr = buf.str();
+    const char* vertShaderSrc = vertShaderStr.c_str();
+    
+    buf.str("");
+    f.close();
+    f.open("/Users/enari/Documents/Repos/DVA338/DVA338/DVA338/shaders/ci.frag");
+    buf << f.rdbuf();
+    
+    std::string fragShaderStr = buf.str();
+    const char* fragShaderSrc = fragShaderStr.c_str();
+ 
+    
+    prepareShaderProgram(&vertShaderSrc, &fragShaderSrc);
     
     // Setup OpenGL buffers for rendering of the meshes
     Mesh * mesh = meshList;
