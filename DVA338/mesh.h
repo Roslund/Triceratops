@@ -11,7 +11,6 @@ typedef struct _Triangle {
 typedef struct _Mesh {
     std::string name;
     Vector scale;
-    Vector rotation;
     HomVector Quaternion;
     Vector translation;
     int nv;

@@ -6,7 +6,6 @@ void insertModel(Mesh **list, std::string name, int nv, float * vArr, int nt, in
     Mesh * mesh = (Mesh *) malloc(sizeof(Mesh));
     mesh->name = name;
     mesh->scale = {1, 1, 1};
-    mesh->rotation = {0, 0, 0}; //Not really used anymore
     mesh->Quaternion = {0, 0, 0, 0};
     mesh->translation = {0, 0, 0};
     mesh->nv = nv;
