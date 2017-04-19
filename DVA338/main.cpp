@@ -15,6 +15,16 @@
 #include "algebra.h"
 #include "mesh.h"
 
+// Include data for some triangle meshes (hard coded in struct variables)
+#include "./models/mesh_bunny.h"
+#include "./models/mesh_cow.h"
+#include "./models/mesh_cube.h"
+#include "./models/mesh_frog.h"
+#include "./models/mesh_knot.h"
+#include "./models/mesh_sphere.h"
+#include "./models/mesh_teapot.h"
+#include "./models/mesh_triceratops.h"
+
 
 int screen_width = 1024;
 int screen_height = 768;
@@ -23,23 +33,19 @@ Mesh *meshList = NULL; // Global pointer to linked list of triangle meshes
 
 Camera cam = {{0,0,20}, {0,0,0}, 60, 0.1, 10000}; // Setup the global camera parameters
 
+Matrix V, P, PV;
+
 GLuint shprg; // Shader program id
 
 //Antons globala stuff
 enum Projection {Perspective, Frustum, Ortographic};
-char loadModelName[64] = "";
-
 Projection projection = Perspective;
 bool TweakBarVisible = 0;
-TwType TW_TYPE_VEC;
+
 TwBar *bar;// Pointer to a tweak bar
+TwType TW_TYPE_VEC;
+char loadModelName[64] = "";
 
-
-// Global transform matrices
-// V is the view transform
-// P is the projection transform
-// PV = P * V is the combined view-projection transform
-Matrix V, P, PV;
 
 void prepareShaderProgram(const char ** vs_src, const char ** fs_src) {
     GLint success = GL_FALSE;
@@ -103,8 +109,7 @@ void prepareMesh(Mesh *mesh) {
     glBindVertexArray(0);
 }
 
-void renderMesh(Mesh *mesh)
-{
+void renderMesh(Mesh *mesh) {
     glEnable(GL_DEPTH_TEST); ///Needed to get Z-buffer/depth for assignment 1.3
     
     // Assignment 1: Apply the transforms from local mesh coordinates to world coordinates here
@@ -356,26 +361,14 @@ void cleanUp(void) {
     printf("Done!\n\n");
 }
 
-// Include data for some triangle meshes (hard coded in struct variables)
-#include "./models/mesh_bunny.h"
-#include "./models/mesh_cow.h"
-#include "./models/mesh_cube.h"
-#include "./models/mesh_frog.h"
-#include "./models/mesh_knot.h"
-#include "./models/mesh_sphere.h"
-#include "./models/mesh_teapot.h"
-#include "./models/mesh_triceratops.h"
-
-void removeModelFromTwbar(Mesh* mesh)
-{
+void removeModelFromTwbar(Mesh* mesh) {
     TwRemoveVar(bar, (mesh->name + "Rotation").c_str());
     TwRemoveVar(bar, (mesh->name + "Scale").c_str());
     TwRemoveVar(bar, (mesh->name + "Translation").c_str());
     TwRemoveVar(bar, (mesh->name + "Unload").c_str());
 }
 
-void removeMeshFromMeshlist(Mesh* meshToRemove)
-{
+void removeMeshFromMeshlist(Mesh* meshToRemove) {
     if(meshList == meshToRemove)
         meshList = meshList->next;
     
@@ -389,8 +382,7 @@ void removeMeshFromMeshlist(Mesh* meshToRemove)
     }
 }
 
-void TW_CALL TwUnloadModel(void *clientData)
-{
+void TW_CALL TwUnloadModel(void *clientData) {
     Mesh* mesh = (Mesh*)clientData;
     
     removeModelFromTwbar(mesh);
@@ -400,8 +392,7 @@ void TW_CALL TwUnloadModel(void *clientData)
     free(mesh);
 }
 
-int addModelToTwbar(Mesh* mesh)
-{
+int addModelToTwbar(Mesh* mesh) {
     //Check for errors first
     if(0 ==TwAddVarRW(bar, (mesh->name + "Rotation").c_str(), TW_TYPE_QUAT4F, &mesh->Quaternion, (" label='Model Rotation' Group='" + mesh->name + "' opened=false ").c_str()))
         return 0;
@@ -413,15 +404,13 @@ int addModelToTwbar(Mesh* mesh)
     return 1;
 }
 
-void TW_CALL TwResetCameraRotation(void *clientData)
-{
+void TW_CALL TwResetCameraRotation(void *clientData) {
     cam.rotation.x = 0;
     cam.rotation.y = 0;
     cam.rotation.z = 0;
 }
 
-void TW_CALL TwLoadModel(void *clientData)
-{
+void TW_CALL TwLoadModel(void *clientData) {
     
     if (strcasecmp(loadModelName,"bunny")==0)
         insertModel(&meshList, "Bunny", bunny.nov, bunny.verts, bunny.nof, bunny.faces, 60.0);
@@ -457,8 +446,7 @@ void TW_CALL TwLoadModel(void *clientData)
     }
 }
 
-void prepareTweakBar()
-{
+void prepareTweakBar() {
     // Set GLUT event callbacks
     // - Directly redirect GLUT mouse button events to AntTweakBar
     glutMouseFunc((GLUTmousebuttonfun)TwEventMouseButtonGLUT);
@@ -525,8 +513,7 @@ void prepareTweakBar()
     TwDefine(" TweakBar/Models opened=false "); //make the model group closed
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
     
     // Setup freeGLUT ///Probably GLUT and not free glut, since mac...
     glutInit(&argc, argv);
