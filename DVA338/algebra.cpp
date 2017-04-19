@@ -43,7 +43,7 @@ Matrix generateOrthographicProjectionMatrix(int width, int height, double n, dou
     Matrix P;
     float aspectRatio = width / (float)height;
     
-    float scale = tan(fov * M_PI / 180) * n;
+    float scale = tan(fov * 0.5f * M_PI / 180) * n;
     float r = aspectRatio * scale;
     float l = -r;
     float t = scale;
@@ -63,7 +63,7 @@ Matrix generateFrustumProjectionMatrix(int width, int height, double n, double f
     Matrix P;
     float aspectRatio = width / (float)height;
     
-    float scale = tan(fov * 0.5 * M_PI / 180) * n;
+    float scale = tan((fov * 0.5f) * (M_PI / 180)) * n;
     float r = aspectRatio * scale;
     float l = -r;
     float t = scale;
