@@ -520,6 +520,7 @@ void prepareTweakBar() {
     bar = TwNewBar("TweakBar");
     TwDefine(" TweakBar label='Settings' ");
     TwDefine(" TweakBar size='250 500' color='96 216 224' ");
+    TwDefine(" TweakBar alpha=180 "); // Opacity of the tweakbar
     TwDefine(" TweakBar refresh=0.1 "); // refresh the bar every 0.1 seconds
     TwDefine(" TW_HELP visible=false ");  // help bar is hidden
     TwDefine(" TweakBar iconifiable=false ");
@@ -536,8 +537,8 @@ void prepareTweakBar() {
     TwAddSeparator(bar, NULL, " Group='Camera' ");
     
     //Culling stuff
-    TwAddVarRO(bar, "FPScount", TW_TYPE_FLOAT, &msPerFrame, " label='FPS' Group='Culling' ");
-    TwAddVarRW(bar, "BoundingSphereType", TW_TYPE_BOUNDINGVOLUME, &boundingVolume, " label='Bounding Volume type' Group='Culling' ");
+    TwAddVarRO(bar, "FPScount", TW_TYPE_FLOAT, &msPerFrame, " label='ms/Frame' Group='Culling' ");
+    TwAddVarRW(bar, "BoundingSphereType", TW_TYPE_BOUNDINGVOLUME, &boundingVolume, " label='Bounding Volume' Group='Culling' ");
     TwAddVarRW(bar, "DrawBoundingSphere", TW_TYPE_BOOLCPP, &drawBoundingSphere, " label='Bounding Volume' true=Visible false=Hidden Group='Culling' key=b ");
     
     TwDefine(" TweakBar/Culling opened=false "); //make the model group closed
