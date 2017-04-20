@@ -40,13 +40,22 @@ GLuint shprg; // Shader program id
 
 //Antons globala stuff
 enum Projection {Perspective, Frustum, Ortographic};
+enum BoundingVolume {Sphere, AABB};
+
 Projection projection = Perspective;
+BoundingVolume boundingVolume = Sphere;
+
 bool TweakBarVisible = 0;
-bool drawboundingSphere = 1;
+bool drawBoundingSphere = 1;
 
 TwBar *bar;// Pointer to a tweak bar
 TwType TW_TYPE_VEC;
 char loadModelName[64] = "";
+
+// To Measure speed
+int lastTime = glutGet(GLUT_ELAPSED_TIME);
+int frames = 0;
+float msPerFrame = 0;
 
 
 void prepareShaderProgram(const char ** vs_src, const char ** fs_src) {
@@ -113,6 +122,11 @@ void prepareMesh(Mesh *mesh) {
 
 void renderMesh(Mesh *mesh) {
     glEnable(GL_DEPTH_TEST); ///Needed to get Z-buffer/depth for assignment 1.3
+    glEnable (GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
+    //glEnable(GL_CULL_FACE); //BACK-FACE CULLING
+    //glCullFace(GL_BACK); //BACK-FACE CULLING
     
     // Assignment 1: Apply the transforms from local mesh coordinates to world coordinates here
     // Combine it with the viewing transform that is passed to the shader below
@@ -137,7 +151,7 @@ void renderMesh(Mesh *mesh) {
     // Draw all triangles
     glDrawElements(GL_TRIANGLES, mesh->nt * 3, GL_UNSIGNED_INT, NULL);
     
-    if(drawboundingSphere)
+    if(drawBoundingSphere)
     {
         //Calculate new VW
         W = MatMatMul(translate(mesh->boundingsphereMidpoint.x, mesh->boundingsphereMidpoint.y, mesh->boundingsphereMidpoint.z), scale({mesh->boundingsphereRadious, mesh->boundingsphereRadious, mesh->boundingsphereRadious}));
@@ -146,8 +160,7 @@ void renderMesh(Mesh *mesh) {
         // Select current resources
         glBindVertexArray(boundingSphere->vao);
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        GLint loc_PV = glGetUniformLocation(shprg, "PV");
-        glUniformMatrix4fv(loc_PV, 1, GL_FALSE, VW.e);
+        glUniformMatrix4fv(glGetUniformLocation(shprg, "PV"), 1, GL_FALSE, VW.e);
         glUniform1i(glGetUniformLocation(shprg, "White"), 1);
         glDrawElements(GL_TRIANGLES, boundingSphere->nt * 3, GL_UNSIGNED_INT, NULL);
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -373,6 +386,17 @@ void cleanUp(void) {
     printf("Done!\n\n");
 }
 
+void timerfunc(void) {
+    // Measure speed
+    int currentTime = glutGet(GLUT_ELAPSED_TIME);
+    frames++;
+    if (currentTime - lastTime > 1000) {
+        msPerFrame = (currentTime-lastTime)/(float)frames;
+        lastTime = currentTime;
+        frames = 0;
+    }
+}
+
 void removeModelFromTwbar(Mesh* mesh) {
     TwRemoveVar(bar, (mesh->name + "Rotation").c_str());
     TwRemoveVar(bar, (mesh->name + "Scale").c_str());
@@ -487,14 +511,16 @@ void prepareTweakBar() {
     };
     TW_TYPE_VEC = TwDefineStruct("Vector", VectorMembers, 3, sizeof(Vector), NULL, NULL);
 
-    enum Projection {Perspective, Frustum, Ortographic};
     TwEnumVal projectionEV[] = { {Perspective, "Perspective"}, {Frustum, "Frustum"}, {Ortographic, "Ortographic"} };
     TwType TW_TYPE_PROJECTION = TwDefineEnum("TW_TYPE_PROJECTION", projectionEV, 3);
     
+    TwEnumVal BoundingVolumeEV[] = { {Sphere, "Sphere"}, {AABB, "AABB"} };
+    TwType TW_TYPE_BOUNDINGVOLUME = TwDefineEnum("TW_TYPE_BOUNDINGVOLUME", BoundingVolumeEV, 2);
+    
     bar = TwNewBar("TweakBar");
     TwDefine(" TweakBar label='Settings' ");
-    TwDefine(" TweakBar size='200 400' color='96 216 224' ");
-    TwDefine(" TweakBar refresh=0.1 "); // refresh the bar every 1.5 seconds
+    TwDefine(" TweakBar size='250 500' color='96 216 224' ");
+    TwDefine(" TweakBar refresh=0.1 "); // refresh the bar every 0.1 seconds
     TwDefine(" TW_HELP visible=false ");  // help bar is hidden
     TwDefine(" TweakBar iconifiable=false ");
     TwDefine(" TweakBar visible=false ");
@@ -507,16 +533,22 @@ void prepareTweakBar() {
     TwAddVarRW(bar, "CamNear", TW_TYPE_DOUBLE, &cam.nearPlane, " label='Near Plane' Group='Camera' Step=0.1 Min=0.1 ");
     TwAddVarRW(bar, "CamFar", TW_TYPE_DOUBLE, &cam.farPlane, " label='Far Plane' Group='Camera' Step=1 ");
     TwAddVarRW(bar, "Projection", TW_TYPE_PROJECTION, &projection, " label='Projection' Group='Camera' key=p help='Toggle Paralell mode.' ");
-    TwAddVarRW(bar, "BoundingSphere", TW_TYPE_BOOLCPP, &drawboundingSphere, " label='Bounding Sphere' Group='Camera' key=b ");
     TwAddSeparator(bar, NULL, " Group='Camera' ");
     
+    //Culling stuff
+    TwAddVarRO(bar, "FPScount", TW_TYPE_FLOAT, &msPerFrame, " label='FPS' Group='Culling' ");
+    TwAddVarRW(bar, "BoundingSphereType", TW_TYPE_BOUNDINGVOLUME, &boundingVolume, " label='Bounding Volume type' Group='Culling' ");
+    TwAddVarRW(bar, "DrawBoundingSphere", TW_TYPE_BOOLCPP, &drawBoundingSphere, " label='Bounding Volume' true=Visible false=Hidden Group='Culling' key=b ");
+    
+    TwDefine(" TweakBar/Culling opened=false "); //make the model group closed
+    
     //Load Model stuff
+    TwAddButton(bar, NULL, NULL, NULL, " label='Load a model' group=Models ");
+    TwAddVarRW(bar, "modelNameInput", TW_TYPE_CSSTRING(sizeof(loadModelName)), loadModelName, " label='Model Name' group=Models ");
+    TwAddButton(bar, NULL, TwLoadModel, NULL, " label='Load' group=Models  ");
+    TwDefine(" TweakBar/Models opened=false "); //make the model group closed
     
-    TwAddButton(bar, NULL, NULL, NULL, " label='Load a model'");
-    TwAddVarRW(bar, "modelNameInput", TW_TYPE_CSSTRING(sizeof(loadModelName)), loadModelName, " label='Model Name' ");
-    TwAddButton(bar, NULL, TwLoadModel, NULL, " label='Load '");
-    
-    //Add Model controls
+    //Add Model controls for the preloaded models
     Mesh* mesh = meshList;
     while (mesh != NULL)
     {
@@ -524,7 +556,7 @@ void prepareTweakBar() {
         mesh = mesh->next;
     }
     
-    TwDefine(" TweakBar/Models opened=false "); //make the model group closed
+    
 }
 
 int main(int argc, char **argv) {
@@ -537,6 +569,7 @@ int main(int argc, char **argv) {
     glutDisplayFunc(display);
     glutReshapeFunc(changeSize);
     glutKeyboardFunc(keypress);
+    glutIdleFunc(timerfunc);
     
     
     // Output OpenGL version info
@@ -559,6 +592,7 @@ int main(int argc, char **argv) {
     //insertModel(&meshList, teapot.nov, teapot.verts, teapot.nof, teapot.faces, 0.1);
     
     prepareTweakBar();
+    lastTime = glutGet(GLUT_ELAPSED_TIME);
     
     init();
     glutMainLoop();
