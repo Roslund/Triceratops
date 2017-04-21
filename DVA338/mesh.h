@@ -36,5 +36,6 @@ typedef struct _Camera {
 
 void insertModel(Mesh ** objlist, std::string name, int nv, float * vArr, int nt, int * tArr, float scale = 1.0);
 void calculateBoundingSphere(Mesh* mesh);
+void calculateBoundingSphereFutheresPoints(Mesh* mesh);
 
 #endif

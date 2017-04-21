@@ -83,3 +83,37 @@ void calculateBoundingSphere(Mesh* mesh)
     mesh->boundingsphereMidpoint.y = min.y + (minToMax.y/2.f);
     mesh->boundingsphereMidpoint.z = min.z + (minToMax.z/2.f);
 }
+
+//Doesent work :(
+void calculateBoundingSphereFutheresPoints(Mesh* mesh)
+{
+    float maxLenthBetweenPoints = 0.f;
+    Vector pointA;
+    Vector vectorA;
+    
+    for (int i = 0; i < mesh->nv; i++)
+    {
+        float maxLengthFromV = 0.f;
+        Vector pointB;
+        Vector vectorB;
+        for (int j = 0; j < mesh->nv; j++)
+        {
+            if(Length(Subtract(mesh->vertices[j], mesh->vertices[i])) > maxLengthFromV)
+            {
+                maxLengthFromV = Length(Subtract(mesh->vertices[j], mesh->vertices[i]));
+                pointB = mesh->vertices[i];
+                vectorB = Subtract(mesh->vertices[j], mesh->vertices[i]);
+            }
+        }
+        if(maxLengthFromV > maxLenthBetweenPoints)
+        {
+            maxLenthBetweenPoints = maxLengthFromV;
+            pointA = pointB;
+            vectorA = vectorB;
+        }
+    }
+    mesh->boundingsphereMidpoint.x = pointA.x + (vectorA.x/2.f);
+    mesh->boundingsphereMidpoint.y = pointA.y + (vectorA.y/2.f);
+    mesh->boundingsphereMidpoint.z = pointA.z + (vectorA.z/2.f);
+    mesh->boundingsphereRadious = Length(vectorA)/2.f;
+}
