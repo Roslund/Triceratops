@@ -465,9 +465,12 @@ void TW_CALL TwLoadModel(void *clientData) {
     else if (strcasecmp(loadModelName,"triceratops")==0)
         insertModel(&meshList, "Triceratops", triceratops.nov, triceratops.verts, triceratops.nof, triceratops.faces, 3.0);
     else {
-        fprintf(stdout, "Unknown model: %s\n\n", loadModelName);
-        strcpy(loadModelName, "Unknown");
-        return;
+        if(!loadModelFromFile(&meshList, "test", loadModelName))
+        {
+            fprintf(stdout, "Unknown model: %s\n\n", loadModelName);
+            strcpy(loadModelName, "Unknown");
+            return;
+        }
     }
     
     Mesh* mesh = meshList; //Vår mesh är den senaste och ligger därför först
@@ -584,6 +587,8 @@ int main(int argc, char **argv) {
     // Note that "meshList" is a pointer to the first mesh and new meshes are added to the front of the list
     //insertModel(&meshList, "Cow", cow.nov, cow.verts, cow.nof, cow.faces, 20.0);
     insertModel(&meshList, "Triceratops", triceratops.nov, triceratops.verts, triceratops.nof, triceratops.faces, 3.0);
+    calculateBoundingSphere(meshList);
+    loadModelFromFile(&meshList, "Test", "/Users/enari/Desktop/test.obj");
     calculateBoundingSphere(meshList);
     //insertModel(&meshList, bunny.nov, bunny.verts, bunny.nof, bunny.faces, 60.0);
     //insertModel(&meshList, cube.nov, cube.verts, cube.nof, cube.faces, 5.0);
