@@ -156,6 +156,10 @@ float DotProduct(Vector a, Vector b) {
     return a.x*b.x + a.y*b.y + a.z*b.z;
 }
 
+float DotProduct(HomVector a, HomVector b) {
+    return a.x*b.x + a.y*b.y + a.z*b.z + a.w*b.w;
+}
+
 Vector Subtract(Vector a, Vector b) {
     Vector v = { a.x-b.x, a.y-b.y, a.z-b.z };
     return v;
@@ -176,12 +180,8 @@ Vector Normalize(Vector a) {
     return v;
 }
 
-float Length(HomVector a) {
-    return sqrt(a.x*a.x + a.y*a.y + a.z*a.z + a.w*a.w);
-}
-
-HomVector Normalize(HomVector a) {
-    float len = Length(a);
+HomVector NormalizePlane(HomVector a) {
+    float len = Length({a.x, a.y, a.z});
     HomVector v = { a.x/len, a.y/len, a.z/len, a.w/len };
     return v;
 }

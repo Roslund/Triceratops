@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "mesh.h"
 #include <vector>
+#include "algebra.h"
 
 
 void insertModel(Mesh **list, std::string name, int nv, float * vArr, int nt, int * tArr, float scale) {
@@ -16,6 +17,7 @@ void insertModel(Mesh **list, std::string name, int nv, float * vArr, int nt, in
     mesh->vnorms = (Vector *)malloc(nv * sizeof(Vector));
     mesh->triangles = (Triangle *) malloc(nt * sizeof(Triangle));
     mesh->tnorms = (Vector *) malloc(nt * sizeof(Vector));
+    mesh->visible = true;
     
     // set mesh vertices
     for (int i = 0; i < nv; i++) {
@@ -86,8 +88,9 @@ bool loadModelFromFile(Mesh **list, std::string name, std::string path) {
         {
             std::string vertex1, vertex2, vertex3;
             unsigned int vertexIndex[3], uvIndex[3], normalIndex[3];
+            
             int matches = fscanf(file, "%d/%d/%d %d/%d/%d %d/%d/%d\n", &vertexIndex[0], &uvIndex[0], &normalIndex[0], &vertexIndex[1], &uvIndex[1], &normalIndex[1], &vertexIndex[2], &uvIndex[2], &normalIndex[2] );
-            if (matches != 9)
+            if (matches == 1)
             {
                 matches = fscanf(file, "%d %d\n", &vertexIndex[1], &vertexIndex[2]);
                 if(matches != 2)
@@ -96,6 +99,16 @@ bool loadModelFromFile(Mesh **list, std::string name, std::string path) {
                     return false;
                 }
             }
+            else if(matches == 2)
+            {
+                fscanf(file, "%d/%d %d/%d", &vertexIndex[1], &uvIndex[1], &vertexIndex[2], &uvIndex[2] );
+            }
+            else
+            {
+                printf("File can't be read by our simple parser : ( Try exporting with other options\n");
+                return false;
+            }
+            
             vertexIndices.push_back(vertexIndex[0]);
             vertexIndices.push_back(vertexIndex[1]);
             vertexIndices.push_back(vertexIndex[2]);
@@ -113,6 +126,7 @@ bool loadModelFromFile(Mesh **list, std::string name, std::string path) {
     mesh->vnorms = (Vector *)malloc(mesh->nv * sizeof(Vector));
     mesh->triangles = (Triangle *) malloc(mesh->nt * sizeof(Triangle));
     mesh->tnorms = (Vector *) malloc(mesh->nt * sizeof(Vector));
+    mesh->visible = true;
     
     
     // set mesh vertices
@@ -214,4 +228,56 @@ void calculateBoundingSphereFutheresPoints(Mesh* mesh)
     mesh->boundingsphereMidpoint.y = pointA.y + (vectorA.y/2.f);
     mesh->boundingsphereMidpoint.z = pointA.z + (vectorA.z/2.f);
     mesh->boundingsphereRadious = Length(vectorA)/2.f;
+}
+
+//VW is the combined model view perspective matrix
+void viewFrustrumCulling(Matrix* VW, Mesh* mesh)
+{
+    Vector c = mesh->boundingsphereMidpoint;
+    float radious = mesh->boundingsphereRadious *2;
+    HomVector center = {c.x, c.y, c.z, 1};
+    HomVector left =    {VW->e[3]-VW->e[0], VW->e[7]-VW->e[4], VW->e[11]-VW->e[8], VW->e[15]-VW->e[12]};
+    HomVector right =   {VW->e[3]+VW->e[0], VW->e[7]+VW->e[4], VW->e[11]+VW->e[8], VW->e[15]+VW->e[12]};
+    HomVector bottom =  {VW->e[3]-VW->e[1], VW->e[7]-VW->e[5], VW->e[11]-VW->e[9], VW->e[15]-VW->e[13]};
+    HomVector top =     {VW->e[3]+VW->e[1], VW->e[7]+VW->e[5], VW->e[11]+VW->e[9], VW->e[15]+VW->e[13]};
+    HomVector near =    {VW->e[3]-VW->e[2], VW->e[7]-VW->e[6], VW->e[11]-VW->e[10], VW->e[15]-VW->e[14]};
+    HomVector far =     {VW->e[3]+VW->e[2], VW->e[7]+VW->e[6], VW->e[11]+VW->e[10], VW->e[15]+VW->e[14]};
+    NormalizePlane(left);
+    NormalizePlane(right);
+    NormalizePlane(bottom);
+    NormalizePlane(top);
+    NormalizePlane(near);
+    NormalizePlane(far);
+    
+    if(DotProduct(left, center) <= -radious)
+    {
+        //printf("Outside Left\n");
+    }
+    else if(DotProduct(right, center) <= -radious)
+    {
+        //printf("Outside Right\n");
+    }
+    else if(DotProduct(bottom, center) <= -radious)
+    {
+        //printf("Outside Bottom\n");
+    }
+    else if(DotProduct(top, center) <= -radious)
+    {
+        //printf("Outside Top\n");
+    }
+    else if(DotProduct(near, center) <= -radious)
+    {
+        //printf("Outside Near\n");
+    }
+    else if(DotProduct(far, center) <= -radious)
+    {
+        //printf("Outside Far\n");
+    }
+    else
+    {
+        //printf("Inside\n");
+        mesh->visible = true;
+        return;
+    }
+    mesh->visible = false;
 }

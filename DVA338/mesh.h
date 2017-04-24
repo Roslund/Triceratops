@@ -21,6 +21,7 @@ typedef struct _Mesh {
     Vector *tnorms;
     Vector boundingsphereMidpoint;
     float boundingsphereRadious;
+    bool visible;
     struct _Mesh *next;
     
     unsigned int vbo, ibo, vao; // OpenGL handles for rendering
@@ -38,5 +39,6 @@ void insertModel(Mesh ** objlist, std::string name, int nv, float * vArr, int nt
 bool loadModelFromFile(Mesh **list, std::string name, std::string path);
 void calculateBoundingSphere(Mesh* mesh);
 void calculateBoundingSphereFutheresPoints(Mesh* mesh);
+void viewFrustrumCulling(Matrix* VW, Mesh* mesh);
 
 #endif

@@ -137,10 +137,14 @@ void renderMesh(Mesh *mesh) {
     
     VW = MatMatMul(PV, W);
     
+    viewFrustrumCulling(&VW, mesh);
     // Pass the viewing transform to the shader
     GLint loc_PV = glGetUniformLocation(shprg, "PV");
     glUniformMatrix4fv(loc_PV, 1, GL_FALSE, VW.e);
-    glUniform1i(glGetUniformLocation(shprg, "White"), 0);
+    if(mesh->visible)
+        glUniform1i(glGetUniformLocation(shprg, "White"), 0);
+    else
+        glUniform1i(glGetUniformLocation(shprg, "White"), 1);
     
     // Select current resources
     glBindVertexArray(mesh->vao);
@@ -430,6 +434,7 @@ void TW_CALL TwUnloadModel(void *clientData) {
 
 int addModelToTwbar(Mesh* mesh) {
     //Check for errors first
+    TwAddVarRO(bar, (mesh->name + "Visible").c_str(), TW_TYPE_BOOLCPP, &mesh->visible, (" label='Visble' Group='" + mesh->name + "' true=Visible false=Culled ").c_str());
     if(0 ==TwAddVarRW(bar, (mesh->name + "Rotation").c_str(), TW_TYPE_QUAT4F, &mesh->Quaternion, (" label='Model Rotation' Group='" + mesh->name + "' opened=false ").c_str()))
         return 0;
     TwAddVarRW(bar, (mesh->name + "Scale").c_str(), TW_TYPE_VEC, &mesh->scale, (" label='Model Scale' Group='" + mesh->name + "' opened=false ").c_str());
@@ -586,10 +591,10 @@ int main(int argc, char **argv) {
     // Insert the 3D models you want in your scene here in a linked list of meshes
     // Note that "meshList" is a pointer to the first mesh and new meshes are added to the front of the list
     //insertModel(&meshList, "Cow", cow.nov, cow.verts, cow.nof, cow.faces, 20.0);
-    insertModel(&meshList, "Triceratops", triceratops.nov, triceratops.verts, triceratops.nof, triceratops.faces, 3.0);
+    insertModel(&meshList, "Triceratops", triceratops.nov, triceratops.verts, triceratops.nof, triceratops.faces, 1.0);
     calculateBoundingSphere(meshList);
-    loadModelFromFile(&meshList, "Test", "/Users/enari/Desktop/test.obj");
-    calculateBoundingSphere(meshList);
+    //loadModelFromFile(&meshList, "Test", "/Users/enari/Desktop/test.obj");
+    //calculateBoundingSphere(meshList);
     //insertModel(&meshList, bunny.nov, bunny.verts, bunny.nof, bunny.faces, 60.0);
     //insertModel(&meshList, cube.nov, cube.verts, cube.nof, cube.faces, 5.0);
     //insertModel(&meshList, frog.nov, frog.verts, frog.nof, frog.faces, 2.5);
