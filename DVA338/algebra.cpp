@@ -176,6 +176,16 @@ Vector Normalize(Vector a) {
     return v;
 }
 
+float Length(HomVector a) {
+    return sqrt(a.x*a.x + a.y*a.y + a.z*a.z + a.w*a.w);
+}
+
+HomVector Normalize(HomVector a) {
+    float len = Length(a);
+    HomVector v = { a.x/len, a.y/len, a.z/len, a.w/len };
+    return v;
+}
+
 Vector ScalarVecMul(float t, Vector a) {
     Vector b = { t*a.x, t*a.y, t*a.z };
     return b;

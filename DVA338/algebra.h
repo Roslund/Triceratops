@@ -35,6 +35,8 @@ Vector CrossProduct(Vector a, Vector b);
 float DotProduct(Vector a, Vector b);
 float Length(Vector a);
 Vector Normalize(Vector a);
+float Length(HomVector a);
+HomVector Normalize(HomVector a);
 Vector ScalarVecMul(float t, Vector a);
 HomVector MatVecMul(Matrix a, Vector b);
 Vector Homogenize(HomVector a);
