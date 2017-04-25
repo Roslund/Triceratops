@@ -2,15 +2,27 @@
 #include <stdio.h>
 #include "mesh.h"
 #include <vector>
+#include <random>
 #include "algebra.h"
 
+// Random seed
+std::random_device rd;
+
+// Initialize Mersenne Twister pseudo-random number generator
+std::mt19937 gen(rd());
+
+float rnd(int min, int max)
+{
+    std::uniform_int_distribution<> dis(min, max);
+    return static_cast <float>(dis(gen));
+}
 
 void insertModel(Mesh **list, std::string name, int nv, float * vArr, int nt, int * tArr, float scale) {
     Mesh * mesh = (Mesh *) malloc(sizeof(Mesh));
     mesh->name = name;
     mesh->scale = {1, 1, 1};
     mesh->Quaternion = {0, 0, 0, 0};
-    mesh->translation = {0, 0, 0};
+    mesh->translation = {rnd(-50, 50), rnd(-50, 50), -rnd(0, 100)};
     mesh->nv = nv;
     mesh->nt = nt;
     mesh->vertices = (Vector *) malloc(nv * sizeof(Vector));

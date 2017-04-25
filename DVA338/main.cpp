@@ -137,7 +137,13 @@ void renderMesh(Mesh *mesh) {
     
     VW = MatMatMul(PV, W);
     
+    //Do the culling
     viewFrustrumCulling(&VW, mesh);
+    
+    //If mesh is not visible don't render it.
+    if(!mesh->visible)
+        return;
+    
     // Pass the viewing transform to the shader
     GLint loc_PV = glGetUniformLocation(shprg, "PV");
     glUniformMatrix4fv(loc_PV, 1, GL_FALSE, VW.e);
@@ -402,6 +408,7 @@ void timerfunc(void) {
 }
 
 void removeModelFromTwbar(Mesh* mesh) {
+    TwRemoveVar(bar, (mesh->name + "Visible").c_str());
     TwRemoveVar(bar, (mesh->name + "Rotation").c_str());
     TwRemoveVar(bar, (mesh->name + "Scale").c_str());
     TwRemoveVar(bar, (mesh->name + "Translation").c_str());
@@ -433,10 +440,18 @@ void TW_CALL TwUnloadModel(void *clientData) {
 }
 
 int addModelToTwbar(Mesh* mesh) {
-    //Check for errors first
-    TwAddVarRO(bar, (mesh->name + "Visible").c_str(), TW_TYPE_BOOLCPP, &mesh->visible, (" label='Visble' Group='" + mesh->name + "' true=Visible false=Culled ").c_str());
-    if(0 ==TwAddVarRW(bar, (mesh->name + "Rotation").c_str(), TW_TYPE_QUAT4F, &mesh->Quaternion, (" label='Model Rotation' Group='" + mesh->name + "' opened=false ").c_str()))
-        return 0;
+    
+    //Apending numbers to modelnames to keep them uniqe
+    int i = 1;
+    std::string name = mesh->name;
+    
+    
+    
+    while(0 == TwAddVarRO(bar, (mesh->name + "Visible").c_str(), TW_TYPE_BOOLCPP, &mesh->visible, (" label='Visble' Group='" + mesh->name + "' true=Visible false=Culled ").c_str()))
+    {
+        mesh->name = (name + std::to_string(i++)).c_str();
+    }
+    TwAddVarRW(bar, (mesh->name + "Rotation").c_str(), TW_TYPE_QUAT4F, &mesh->Quaternion, (" label='Model Rotation' Group='" + mesh->name + "' opened=false ").c_str());
     TwAddVarRW(bar, (mesh->name + "Scale").c_str(), TW_TYPE_VEC, &mesh->scale, (" label='Model Scale' Group='" + mesh->name + "' opened=false ").c_str());
     TwAddVarRW(bar, (mesh->name + "Translation").c_str(), TW_TYPE_VEC, &mesh->translation, (" label='Model Translation' Group='" + mesh->name + "' opened=false ").c_str());
     TwAddButton(bar, (mesh->name + "Unload").c_str(), TwUnloadModel, mesh, (" label='Remove model' Group='" + mesh->name + "' ").c_str());

@@ -1,5 +1,4 @@
 //
-//  vs_normalsToColor.glsl
 //  DVA338
 //
 //  Created by Anton Roslund on 2017-04-19.
