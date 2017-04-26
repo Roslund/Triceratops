@@ -24,6 +24,7 @@ Matrix generatePerspectiveProjectionMatrix(int width, int height, double near, d
 Matrix generateOrthographicProjectionMatrix(int width, int height, double n, double f, double fov);
 Matrix generateFrustumProjectionMatrix(int width, int height, double near, double far, double fov);
 Matrix translate(float x, float y, float z);
+Matrix translate(Vector in);
 Matrix scale(float x, float y, float z);
 Matrix scale(Vector in);
 Matrix rotationX(float rad);

@@ -71,8 +71,13 @@ void insertModel(Mesh **list, std::string name, int nv, float * vArr, int nt, in
 
 bool loadModelFromFile(Mesh **list, std::string name, std::string path) {
 
-    std::vector< unsigned int > vertexIndices, uvIndices, normalIndices;
+    std::vector< unsigned int > uvIndices;
+    std::vector< unsigned int > normalIndices;
     std::vector< Vector > temp_vertices;
+    std::vector< Triangle > temp_triangles;
+    std::vector< Vector > temp_normals;
+    
+    path = "/Users/enari/Desktop/" + path;
     
     FILE * file = fopen(path.c_str(), "r");
     if( file == NULL )
@@ -96,16 +101,27 @@ bool loadModelFromFile(Mesh **list, std::string name, std::string path) {
             fscanf(file, "%f %f %f\n", &vertex.x, &vertex.y, &vertex.z );
             temp_vertices.push_back(vertex);
         }
+        if ( strcmp( lineHeader, "vn" ) == 0 )
+        {
+            Vector normal;
+            fscanf(file, "%f %f %f\n", &normal.x, &normal.y, &normal.z );
+            temp_normals.push_back(normal);
+        }
         else if ( strcmp( lineHeader, "f" ) == 0 )
         {
-            std::string vertex1, vertex2, vertex3;
-            unsigned int vertexIndex[3], uvIndex[3], normalIndex[3];
+            //std::string vertex1, vertex2, vertex3;
+            unsigned int uvIndex[3], normalIndex[3];
+            int vertexIndex[3];
             
             int matches = fscanf(file, "%d/%d/%d %d/%d/%d %d/%d/%d\n", &vertexIndex[0], &uvIndex[0], &normalIndex[0], &vertexIndex[1], &uvIndex[1], &normalIndex[1], &vertexIndex[2], &uvIndex[2], &normalIndex[2] );
             if (matches == 1)
             {
                 matches = fscanf(file, "%d %d\n", &vertexIndex[1], &vertexIndex[2]);
-                if(matches != 2)
+                if(matches == 0)
+                {
+                    matches = fscanf(file, "/%d %d//%d %d//%d\n", &normalIndex[0], &vertexIndex[1], &normalIndex[1], & vertexIndex[2], &normalIndex[2] );
+                }
+                else if(matches != 2)
                 {
                     printf("File can't be read by our simple parser : ( Try exporting with other options\n");
                     return false;
@@ -121,9 +137,11 @@ bool loadModelFromFile(Mesh **list, std::string name, std::string path) {
                 return false;
             }
             
-            vertexIndices.push_back(vertexIndex[0]);
-            vertexIndices.push_back(vertexIndex[1]);
-            vertexIndices.push_back(vertexIndex[2]);
+            //Add our vetexindexes to a triangle and add that to the vector
+            //Note that OBJ indexes strats att 1 not 0, therefor -1
+            Triangle triangle = {vertexIndex[0]-1, vertexIndex[1]-1, vertexIndex[2]-1};
+            temp_triangles.push_back(triangle);
+            
         }
     }
     
@@ -133,40 +151,37 @@ bool loadModelFromFile(Mesh **list, std::string name, std::string path) {
     mesh->Quaternion = {0, 0, 0, 0};
     mesh->translation = {0, 0, 0};
     mesh->nv = (int)temp_vertices.size();
-    mesh->nt = (int)vertexIndices.size()/3;
+    mesh->nt = (int)temp_triangles.size();
     mesh->vertices = (Vector *) malloc(mesh->nv * sizeof(Vector));
+    mesh->vertices = temp_vertices.data();
     mesh->vnorms = (Vector *)malloc(mesh->nv * sizeof(Vector));
     mesh->triangles = (Triangle *) malloc(mesh->nt * sizeof(Triangle));
+    mesh->triangles = temp_triangles.data();
     mesh->tnorms = (Vector *) malloc(mesh->nt * sizeof(Vector));
     mesh->visible = true;
     
+    printf("Vertices: %d, Normals: %d", temp_vertices.size(), temp_normals.size());
     
-    // set mesh vertices
-    for (int i = 0; i < mesh->nv; i++) {
-        mesh->vertices[i] = temp_vertices[i];
-    }
-    
-    // set mesh triangles
-    for (int i = 0; i < mesh->nt; i++) {
-        mesh->triangles[i].vInds[0] = vertexIndices[i*3]-1;
-        mesh->triangles[i].vInds[1] = vertexIndices[i*3+1]-1;
-        mesh->triangles[i].vInds[2] = vertexIndices[i*3+2]-1;
-    }
-    
-    /// Calulating triangle normals
-    for(int i = 0; i < mesh->nt; i++) {
-        Vector a = Subtract(mesh->vertices[mesh->triangles[i].vInds[1]], mesh->vertices[mesh->triangles[i].vInds[0]]);
-        Vector b = Subtract(mesh->vertices[mesh->triangles[i].vInds[2]], mesh->vertices[mesh->triangles[i].vInds[0]]);
-        mesh->tnorms[i] = Normalize(CrossProduct(a, b));
-    }
-    
-    // Calculate vetex normals
-    for (int i = 0; i < mesh->nv; i++) {
-        for(int j = 0; j < mesh->nt; j++) {
-            if ( (mesh->triangles[j].vInds[0] == i) || (mesh->triangles[j].vInds[1] == i) || (mesh->triangles[j].vInds[2] == i) ) {
-                mesh->vnorms[i] = Normalize(Add(mesh->vnorms[i], mesh->tnorms[j]));
+    if(temp_normals.size() == 0)
+    {
+        /// Calulating triangle normals
+        for(int i = 0; i < mesh->nt; i++) {
+            Vector a = Subtract(mesh->vertices[mesh->triangles[i].vInds[1]], mesh->vertices[mesh->triangles[i].vInds[0]]);
+            Vector b = Subtract(mesh->vertices[mesh->triangles[i].vInds[2]], mesh->vertices[mesh->triangles[i].vInds[0]]);
+            mesh->tnorms[i] = Normalize(CrossProduct(a, b));
+        }
+        
+        // Calculate vetex normals
+        for (int i = 0; i < mesh->nv; i++) {
+            for(int j = 0; j < mesh->nt; j++) {
+                if ( (mesh->triangles[j].vInds[0] == i) || (mesh->triangles[j].vInds[1] == i) || (mesh->triangles[j].vInds[2] == i) ) {
+                    mesh->vnorms[i] = Normalize(Add(mesh->vnorms[i], mesh->tnorms[j]));
+                }
             }
         }
+    }
+    else{
+        mesh->vnorms = temp_normals.data();
     }
     
     //Add it first in the mesh list

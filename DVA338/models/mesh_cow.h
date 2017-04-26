@@ -1,6 +1,7 @@
 /* Definition of a triangle mesh for a cow */
 
 #pragma warning(disable: 4305)
+#pragma once
 
 struct cow_ {
 	int nov;

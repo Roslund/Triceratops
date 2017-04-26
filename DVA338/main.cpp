@@ -133,7 +133,7 @@ void renderMesh(Mesh *mesh) {
     Matrix W, VW;
 
     W = MatMatMul(rotationQuaternion(mesh->Quaternion), scale(mesh->scale));
-    W = MatMatMul(translate(mesh->translation.x, mesh->translation.y, mesh->translation.z), W);
+    W = MatMatMul(translate(mesh->translation), W);
     
     VW = MatMatMul(PV, W);
     
@@ -164,7 +164,7 @@ void renderMesh(Mesh *mesh) {
     if(drawBoundingSphere)
     {
         //Calculate new VW
-        W = MatMatMul(translate(mesh->boundingsphereMidpoint.x, mesh->boundingsphereMidpoint.y, mesh->boundingsphereMidpoint.z), scale({mesh->boundingsphereRadious, mesh->boundingsphereRadious, mesh->boundingsphereRadious}));
+        W = MatMatMul(translate(mesh->boundingsphereMidpoint), scale({mesh->boundingsphereRadious, mesh->boundingsphereRadious, mesh->boundingsphereRadious}));
         VW = MatMatMul(VW, W);
         
         // Select current resources
