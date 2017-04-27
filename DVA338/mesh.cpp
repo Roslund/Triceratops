@@ -59,9 +59,10 @@ void insertModel(Mesh **list, std::string name, int nv, float * vArr, int nt, in
     for (int i = 0; i < nv; i++) {
         for(int j = 0; j < nt; j++) {
             if ( (mesh->triangles[j].vInds[0] == i) || (mesh->triangles[j].vInds[1] == i) || (mesh->triangles[j].vInds[2] == i) ) {
-                mesh->vnorms[i] = Normalize(Add(mesh->vnorms[i], mesh->tnorms[j]));
+                mesh->vnorms[i] = Add(mesh->vnorms[i], mesh->tnorms[j]);
             }
         }
+        mesh->vnorms[i] = Normalize(mesh->vnorms[i]);
     }
     
     //Add it first in the mesh list
@@ -76,6 +77,7 @@ bool loadModelFromFile(Mesh **list, std::string name, std::string path) {
     std::vector< Vector > temp_vertices;
     std::vector< Triangle > temp_triangles;
     std::vector< Vector > temp_normals;
+    std::vector< VertexNormalPair > vnPairs;
     
     path = "/Users/enari/Desktop/" + path;
     
@@ -110,8 +112,10 @@ bool loadModelFromFile(Mesh **list, std::string name, std::string path) {
         else if ( strcmp( lineHeader, "f" ) == 0 )
         {
             //std::string vertex1, vertex2, vertex3;
-            unsigned int uvIndex[3], normalIndex[3];
-            int vertexIndex[3];
+            int uvIndex[4];
+            int normalIndex[4];
+            int vertexIndex[4];
+            bool four = false;
             
             int matches = fscanf(file, "%d/%d/%d %d/%d/%d %d/%d/%d\n", &vertexIndex[0], &uvIndex[0], &normalIndex[0], &vertexIndex[1], &uvIndex[1], &normalIndex[1], &vertexIndex[2], &uvIndex[2], &normalIndex[2] );
             if (matches == 1)
@@ -129,7 +133,9 @@ bool loadModelFromFile(Mesh **list, std::string name, std::string path) {
             }
             else if(matches == 2)
             {
-                fscanf(file, "%d/%d %d/%d", &vertexIndex[1], &uvIndex[1], &vertexIndex[2], &uvIndex[2] );
+                matches = fscanf(file, "%d/%d %d/%d %d/%d", &vertexIndex[1], &uvIndex[1], &vertexIndex[2], &uvIndex[2], &vertexIndex[3], &uvIndex[3] );
+                if(matches == 6)
+                    four = true;
             }
             else
             {
@@ -141,6 +147,20 @@ bool loadModelFromFile(Mesh **list, std::string name, std::string path) {
             //Note that OBJ indexes strats att 1 not 0, therefor -1
             Triangle triangle = {vertexIndex[0]-1, vertexIndex[1]-1, vertexIndex[2]-1};
             temp_triangles.push_back(triangle);
+            if(four)
+            {
+                triangle = {vertexIndex[1]-1, vertexIndex[2]-1, vertexIndex[3]-1};
+                temp_triangles.push_back(triangle);
+                triangle = {vertexIndex[3]-1, vertexIndex[0]-1, vertexIndex[1]-1};
+                temp_triangles.push_back(triangle);
+            }
+            VertexNormalPair one = {vertexIndex[0]-1, normalIndex[0]-1};
+            VertexNormalPair two = {vertexIndex[1]-1, normalIndex[1]-1};
+            VertexNormalPair three = {vertexIndex[2]-1, normalIndex[2]-1};
+            vnPairs.push_back(one);
+            vnPairs.push_back(two);
+            vnPairs.push_back(three);
+            
             
         }
     }
@@ -160,7 +180,6 @@ bool loadModelFromFile(Mesh **list, std::string name, std::string path) {
     mesh->tnorms = (Vector *) malloc(mesh->nt * sizeof(Vector));
     mesh->visible = true;
     
-    printf("Vertices: %d, Normals: %d", temp_vertices.size(), temp_normals.size());
     
     if(temp_normals.size() == 0)
     {
@@ -175,13 +194,17 @@ bool loadModelFromFile(Mesh **list, std::string name, std::string path) {
         for (int i = 0; i < mesh->nv; i++) {
             for(int j = 0; j < mesh->nt; j++) {
                 if ( (mesh->triangles[j].vInds[0] == i) || (mesh->triangles[j].vInds[1] == i) || (mesh->triangles[j].vInds[2] == i) ) {
-                    mesh->vnorms[i] = Normalize(Add(mesh->vnorms[i], mesh->tnorms[j]));
+                    mesh->vnorms[i] = Add(mesh->vnorms[i], mesh->tnorms[j]);
                 }
             }
+            mesh->vnorms[i] = Normalize(mesh->vnorms[i]);
         }
     }
     else{
-        mesh->vnorms = temp_normals.data();
+        for(auto const &a : vnPairs)
+        {
+            mesh->vnorms[a.vertex] = temp_normals[a.normal];
+        }
     }
     
     //Add it first in the mesh list

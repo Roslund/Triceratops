@@ -595,6 +595,8 @@ int main(int argc, char **argv) {
     glutKeyboardFunc(keypress);
     glutIdleFunc(timerfunc);
     
+    const GLint VBL = 0;
+    CGLSetParameter(CGLGetCurrentContext(), kCGLCPSwapInterval, &VBL);
     
     // Output OpenGL version info
     fprintf(stdout, "OpenGL version: %s\n", (const char *)glGetString(GL_VERSION));
@@ -606,7 +608,7 @@ int main(int argc, char **argv) {
     // Insert the 3D models you want in your scene here in a linked list of meshes
     // Note that "meshList" is a pointer to the first mesh and new meshes are added to the front of the list
     //insertModel(&meshList, "Cow", cow.nov, cow.verts, cow.nof, cow.faces, 20.0);
-    insertModel(&meshList, "Triceratops", triceratops.nov, triceratops.verts, triceratops.nof, triceratops.faces, 1.0);
+    insertModel(&meshList, "Triceratops", triceratops.nov, triceratops.verts, triceratops.nof, triceratops.faces, 3.0);
     calculateBoundingSphere(meshList);
     //loadModelFromFile(&meshList, "Test", "/Users/enari/Desktop/test.obj");
     //calculateBoundingSphere(meshList);

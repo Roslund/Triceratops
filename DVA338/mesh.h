@@ -8,6 +8,12 @@ typedef struct _Triangle {
     int vInds[3]; //vertex indices
 } Triangle;
 
+typedef struct _VertexNormalPair {
+    int vertex;
+    int normal;
+} VertexNormalPair;
+
+
 typedef struct _Mesh {
     std::string name;
     Vector scale;
