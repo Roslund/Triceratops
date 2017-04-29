@@ -14,6 +14,7 @@
 #include "AntTweakBar.h"
 #include "algebra.h"
 #include "mesh.h"
+#include <vector>
 
 // Include data for some triangle meshes (hard coded in struct variables)
 #include "./models/mesh_bunny.h"
@@ -33,6 +34,9 @@ Mesh* meshList = NULL; // Global pointer to linked list of triangle meshes
 Mesh* boundingSphere = NULL; //Global pointer to our boundingsphere mesh
 
 Camera cam = {{0,0,20}, {0,0,0}, 60, 0.1, 10000}; // Setup the global camera parameters
+
+Vector lightDir = {1.0f, 1.0f, 1.0f};
+
 
 Matrix V, P, PV;
 
@@ -69,6 +73,22 @@ void prepareShaderProgram(const char ** vs_src, const char ** fs_src) {
     glGetShaderiv(vs, GL_COMPILE_STATUS, &success);
     if (!success) printf("Error in vertex shader!\n");
     else printf("Vertex shader compiled successfully!\n");
+    
+    if(success == GL_FALSE)
+    {
+        GLint maxLength = 0;
+        glGetShaderiv(vs, GL_INFO_LOG_LENGTH, &maxLength);
+        
+        // The maxLength includes the NULL character
+        std::vector<GLchar> errorLog(maxLength);
+        glGetShaderInfoLog(vs, maxLength, &maxLength, &errorLog[0]);
+        
+        printf("%s", errorLog.data());
+        // Provide the infolog in whatever manor you deem best.
+        // Exit with failure.
+        glDeleteShader(vs); // Don't leak the shader.
+        return;
+    }
     
     GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fs, 1, fs_src, NULL);
@@ -130,27 +150,29 @@ void renderMesh(Mesh *mesh) {
     
     // Assignment 1: Apply the transforms from local mesh coordinates to world coordinates here
     // Combine it with the viewing transform that is passed to the shader below
-    Matrix W, VW;
+    Matrix M, PVM;
 
-    W = MatMatMul(rotationQuaternion(mesh->Quaternion), scale(mesh->scale));
-    W = MatMatMul(translate(mesh->translation), W);
-    
-    VW = MatMatMul(PV, W);
+    M = MatMatMul(rotationQuaternion(mesh->Quaternion), scale(mesh->scale));
+    M = MatMatMul(translate(mesh->translation), M);
+    PVM = MatMatMul(PV, M);
     
     //Do the culling
-    viewFrustrumCulling(&VW, mesh);
+    viewFrustrumCulling(&PVM, mesh);
     
     //If mesh is not visible don't render it.
     if(!mesh->visible)
         return;
     
     // Pass the viewing transform to the shader
-    GLint loc_PV = glGetUniformLocation(shprg, "PV");
-    glUniformMatrix4fv(loc_PV, 1, GL_FALSE, VW.e);
-    if(mesh->visible)
-        glUniform1i(glGetUniformLocation(shprg, "White"), 0);
-    else
-        glUniform1i(glGetUniformLocation(shprg, "White"), 1);
+    glUniformMatrix4fv(glGetUniformLocation(shprg, "Projection"), 1, GL_FALSE, P.e);
+    glUniformMatrix4fv(glGetUniformLocation(shprg, "View"), 1, GL_FALSE, V.e);
+    glUniformMatrix4fv(glGetUniformLocation(shprg, "Model"), 1, GL_FALSE, M.e);
+    
+    glUniform4f(glGetUniformLocation(shprg, "AmbientProduct"), 0.3f, 0.6f, 0.3f, 1.0f);
+    glUniform4f(glGetUniformLocation(shprg, "DiffuseProduct"), 0.6f, 0.9f, 0.6f, 1.0f);
+    glUniform4f(glGetUniformLocation(shprg, "SpecularProduct"), 1.0f, 1.0f, 1.0f, 1.0f);
+    glUniform3f(glGetUniformLocation(shprg, "LightPosition"), lightDir.x, lightDir.y, lightDir.z);
+    glUniform1f(glGetUniformLocation(shprg, "Shininess"), 50.0f);
     
     // Select current resources
     glBindVertexArray(mesh->vao);
@@ -161,7 +183,7 @@ void renderMesh(Mesh *mesh) {
     // Draw all triangles
     glDrawElements(GL_TRIANGLES, mesh->nt * 3, GL_UNSIGNED_INT, NULL);
     
-    if(drawBoundingSphere)
+    /*if(drawBoundingSphere)
     {
         //Calculate new VW
         W = MatMatMul(translate(mesh->boundingsphereMidpoint), scale({mesh->boundingsphereRadious, mesh->boundingsphereRadious, mesh->boundingsphereRadious}));
@@ -174,7 +196,7 @@ void renderMesh(Mesh *mesh) {
         glUniform1i(glGetUniformLocation(shprg, "White"), 1);
         glDrawElements(GL_TRIANGLES, boundingSphere->nt * 3, GL_UNSIGNED_INT, NULL);
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    }
+    }*/
     
     // Unselect resources
     glBindVertexArray(0);
@@ -358,7 +380,7 @@ void init(void) {
     // Compile and link the given shader program (vertex shader and fragment shader)
     std::ifstream f;
     std::stringstream buf;
-    f.open("/Users/enari/Documents/Repos/DVA338/DVA338/DVA338/shaders/n2c.vert");
+    f.open("/Users/enari/Documents/Repos/DVA338/DVA338/DVA338/shaders/modPhong.vert");
     buf << f.rdbuf();
     
     std::string vertShaderStr = buf.str();
@@ -558,6 +580,7 @@ void prepareTweakBar() {
     TwAddVarRW(bar, "CamFar", TW_TYPE_DOUBLE, &cam.farPlane, " label='Far Plane' Group='Camera' Step=1 ");
     TwAddVarRW(bar, "Projection", TW_TYPE_PROJECTION, &projection, " label='Projection' Group='Camera' key=p help='Toggle Paralell mode.' ");
     TwAddSeparator(bar, NULL, " Group='Camera' ");
+    TwAddVarRW(bar, "Lightdir", TW_TYPE_DIR3F, &lightDir, " label='Light Direction' axisx=-x axisy=-y axisz=-z ");
     
     //Culling stuff
     TwAddVarRO(bar, "FPScount", TW_TYPE_FLOAT, &msPerFrame, " label='ms/Frame' Group='Culling' ");
