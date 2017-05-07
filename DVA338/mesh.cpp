@@ -197,7 +197,7 @@ bool loadModelFromFile(Mesh **list, std::string name, std::string path) {
                     mesh->vnorms[i] = Add(mesh->vnorms[i], mesh->tnorms[j]);
                 }
             }
-            mesh->vnorms[i] = Normalize(mesh->vnorms[i]);
+            //mesh->vnorms[i] = Normalize(mesh->vnorms[i]);
         }
     }
     else{

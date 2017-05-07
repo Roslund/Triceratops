@@ -97,6 +97,23 @@ void prepareShaderProgram(const char ** vs_src, const char ** fs_src) {
     if (!success) printf("Error in fragment shader!\n");
     else printf("Fragment shader compiled successfully!\n");
     
+    if(success == GL_FALSE)
+    {
+        GLint maxLength = 0;
+        glGetShaderiv(fs, GL_INFO_LOG_LENGTH, &maxLength);
+        
+        // The maxLength includes the NULL character
+        std::vector<GLchar> errorLog(maxLength);
+        glGetShaderInfoLog(fs, maxLength, &maxLength, &errorLog[0]);
+        
+        printf("%s", errorLog.data());
+        // Provide the infolog in whatever manor you deem best.
+        // Exit with failure.
+        glDeleteShader(fs); // Don't leak the shader.
+        return;
+    }
+    
+    
     glAttachShader(shprg, vs);
     glAttachShader(shprg, fs);
     glLinkProgram(shprg);
@@ -380,7 +397,7 @@ void init(void) {
     // Compile and link the given shader program (vertex shader and fragment shader)
     std::ifstream f;
     std::stringstream buf;
-    f.open("/Users/enari/Documents/Repos/DVA338/DVA338/DVA338/shaders/modPhong.vert");
+    f.open("/Users/enari/Documents/Repos/DVA338/DVA338/DVA338/shaders/Phong.vert");
     buf << f.rdbuf();
     
     std::string vertShaderStr = buf.str();
@@ -388,7 +405,7 @@ void init(void) {
     
     buf.str("");
     f.close();
-    f.open("/Users/enari/Documents/Repos/DVA338/DVA338/DVA338/shaders/ci.frag");
+    f.open("/Users/enari/Documents/Repos/DVA338/DVA338/DVA338/shaders/modPhong.frag");
     buf << f.rdbuf();
     
     std::string fragShaderStr = buf.str();
