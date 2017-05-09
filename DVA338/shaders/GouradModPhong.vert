@@ -26,7 +26,7 @@ void main(void)
     // Transform vertex position into eye coordinates
     vec3 pos = vec3(Model * vec4(vPos, 1.0f));
     
-    vec3 L = normalize(LightPosition);// - pos); //vector from light to the point
+    vec3 L = normalize(LightPosition);// - pos); //vector to light
     vec3 E = normalize(-pos); //Eye position; from origen to point
     vec3 H = normalize(L + E); //Half angle vector
     

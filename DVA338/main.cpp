@@ -44,9 +44,11 @@ GLuint shprg; // Shader program id
 
 //Antons globala stuff
 enum Projection {Perspective, Frustum, Ortographic};
+enum Shader {Phong, Gourad, Cartoon, Normal2Color};
 enum BoundingVolume {Sphere, AABB};
 
 Projection projection = Perspective;
+Shader shader = Phong;
 BoundingVolume boundingVolume = Sphere;
 
 bool TweakBarVisible = 0;
@@ -119,7 +121,22 @@ void prepareShaderProgram(const char ** vs_src, const char ** fs_src) {
     glLinkProgram(shprg);
     GLint isLinked = GL_FALSE;
     glGetProgramiv(shprg, GL_LINK_STATUS, &isLinked);
-    if (!isLinked) printf("Link error in shader program!\n");
+    if (!isLinked)
+    {
+        printf("Link error in shader program!\n");
+        
+        GLint maxLength = 0;
+        glGetShaderiv(shprg, GL_INFO_LOG_LENGTH, &maxLength);
+        
+        // The maxLength includes the NULL character
+        std::vector<GLchar> errorLog(maxLength);
+        glGetProgramInfoLog(shprg, maxLength, &maxLength, &errorLog[0]);
+        printf("%s", errorLog.data());
+        // Provide the infolog in whatever manor you deem best.
+        // Exit with failure.
+        glDeleteShader(shprg); // Don't leak the shader.
+        return;
+    }
     else printf("Shader program linked successfully!\n");
 }
 
@@ -189,7 +206,7 @@ void renderMesh(Mesh *mesh) {
     glUniform4f(glGetUniformLocation(shprg, "DiffuseProduct"), 0.6f, 0.9f, 0.6f, 1.0f);
     glUniform4f(glGetUniformLocation(shprg, "SpecularProduct"), 1.0f, 1.0f, 1.0f, 1.0f);
     glUniform3f(glGetUniformLocation(shprg, "LightPosition"), lightDir.x, lightDir.y, lightDir.z);
-    glUniform1f(glGetUniformLocation(shprg, "Shininess"), 50.0f);
+    glUniform1f(glGetUniformLocation(shprg, "Shininess"), 60.0f);
     
     // Select current resources
     glBindVertexArray(mesh->vao);
@@ -393,11 +410,11 @@ void keypress(unsigned char key, int x, int y) {
     glutPostRedisplay();
 }
 
-void init(void) {
+void init(std::string vert, std::string frag) {
     // Compile and link the given shader program (vertex shader and fragment shader)
     std::ifstream f;
     std::stringstream buf;
-    f.open("/Users/enari/Documents/Repos/DVA338/DVA338/DVA338/shaders/Phong.vert");
+    f.open(vert.c_str());
     buf << f.rdbuf();
     
     std::string vertShaderStr = buf.str();
@@ -405,7 +422,7 @@ void init(void) {
     
     buf.str("");
     f.close();
-    f.open("/Users/enari/Documents/Repos/DVA338/DVA338/DVA338/shaders/modPhong.frag");
+    f.open(frag.c_str());
     buf << f.rdbuf();
     
     std::string fragShaderStr = buf.str();
@@ -545,6 +562,25 @@ void TW_CALL TwLoadModel(void *clientData) {
     }
 }
 
+void TW_CALL SetShader(const void *value, void *clientData)
+{
+    shader = *(const Shader *)value;  // for instance
+    
+    if(shader == Phong)
+        init("/Users/enari/Documents/Repos/DVA338/DVA338/DVA338/shaders/Phong.vert", "/Users/enari/Documents/Repos/DVA338/DVA338/DVA338/shaders/modPhong.frag");
+    else if(shader == Cartoon)
+        init("/Users/enari/Documents/Repos/DVA338/DVA338/DVA338/shaders/Phong.vert", "/Users/enari/Documents/Repos/DVA338/DVA338/DVA338/shaders/carToon.frag");
+    else if(shader == Normal2Color)
+        init("/Users/enari/Documents/Repos/DVA338/DVA338/DVA338/shaders/n2c.vert", "/Users/enari/Documents/Repos/DVA338/DVA338/DVA338/shaders/ci.frag");
+    else if(shader == Gourad)
+        init("/Users/enari/Documents/Repos/DVA338/DVA338/DVA338/shaders/GouradModPhong.vert", "/Users/enari/Documents/Repos/DVA338/DVA338/DVA338/shaders/ci.frag");
+}
+
+void TW_CALL GetShader(void *value, void *clientData)
+{
+    *(Shader *)value = shader;  // for instance
+}
+
 void prepareTweakBar() {
     // Set GLUT event callbacks
     // - Directly redirect GLUT mouse button events to AntTweakBar
@@ -579,6 +615,9 @@ void prepareTweakBar() {
     TwEnumVal BoundingVolumeEV[] = { {Sphere, "Sphere"}, {AABB, "AABB"} };
     TwType TW_TYPE_BOUNDINGVOLUME = TwDefineEnum("TW_TYPE_BOUNDINGVOLUME", BoundingVolumeEV, 2);
     
+    TwEnumVal shaderEV[] = { {Phong, "Phong"}, {Gourad, "Gourad"}, {Cartoon, "Cartoon"}, {Normal2Color, "Normal2Color"} };
+    TwType TW_TYPE_SHADER = TwDefineEnum("TW_TYPE_SHADER", shaderEV, 4);
+    
     bar = TwNewBar("TweakBar");
     TwDefine(" TweakBar label='Settings' ");
     TwDefine(" TweakBar size='250 500' color='96 216 224' ");
@@ -597,7 +636,11 @@ void prepareTweakBar() {
     TwAddVarRW(bar, "CamFar", TW_TYPE_DOUBLE, &cam.farPlane, " label='Far Plane' Group='Camera' Step=1 ");
     TwAddVarRW(bar, "Projection", TW_TYPE_PROJECTION, &projection, " label='Projection' Group='Camera' key=p help='Toggle Paralell mode.' ");
     TwAddSeparator(bar, NULL, " Group='Camera' ");
+    
+    //Shader stuff
     TwAddVarRW(bar, "Lightdir", TW_TYPE_DIR3F, &lightDir, " label='Light Direction' axisx=-x axisy=-y axisz=-z ");
+    TwAddVarCB(bar, "Shader", TW_TYPE_SHADER, SetShader, GetShader, NULL, " label='Shader' key=y ");
+    //TwAddVarCB(bar, "Shader", TW_TYPE_Shader, &shader, " label='Shader' key=y' ");
     
     //Culling stuff
     TwAddVarRO(bar, "FPScount", TW_TYPE_FLOAT, &msPerFrame, " label='ms/Frame' Group='Culling' ");
@@ -662,7 +705,7 @@ int main(int argc, char **argv) {
     prepareTweakBar();
     lastTime = glutGet(GLUT_ELAPSED_TIME);
     
-    init();
+    init("/Users/enari/Documents/Repos/DVA338/DVA338/DVA338/shaders/Phong.vert", "/Users/enari/Documents/Repos/DVA338/DVA338/DVA338/shaders/modPhong.frag");
     glutMainLoop();
     
     cleanUp();	

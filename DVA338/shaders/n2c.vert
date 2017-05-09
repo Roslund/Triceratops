@@ -9,15 +9,13 @@
 in vec3 vPos;
 in vec3 vNorm;
 out vec4 color;
-uniform mat4 PV;
-uniform int White;
+
+uniform mat4 Projection;
+uniform mat4 View;
+uniform mat4 Model;
 
 void main(void)
 {
     color = abs(vec4(vNorm, 1.0));
-    if(White == 1)
-    {
-        color = vec4(1.f, 1.f, 1.f, 1.f);
-    }
-    gl_Position = PV * vec4(vPos, 1.0f);
+    gl_Position = Projection * View * Model * vec4(vPos, 1.0f);
 }
