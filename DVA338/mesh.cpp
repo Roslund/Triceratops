@@ -22,7 +22,8 @@ void insertModel(Mesh **list, std::string name, int nv, float * vArr, int nt, in
     mesh->name = name;
     mesh->scale = {1, 1, 1};
     mesh->Quaternion = {0, 0, 0, 0};
-    mesh->translation = {rnd(-50, 50), rnd(-50, 50), -rnd(0, 100)};
+    //mesh->translation = {rnd(-50, 50), rnd(-50, 50), -rnd(0, 100)};
+    mesh->translation = {0, 0, 0};
     mesh->nv = nv;
     mesh->nt = nt;
     mesh->vertices = (Vector *) malloc(nv * sizeof(Vector));

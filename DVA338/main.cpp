@@ -36,6 +36,8 @@ Mesh* boundingSphere = NULL; //Global pointer to our boundingsphere mesh
 Camera cam = {{0,0,20}, {0,0,0}, 60, 0.1, 10000}; // Setup the global camera parameters
 
 Vector lightDir = {1.0f, 1.0f, 1.0f};
+Vector lightDir2 = {-1.0f, 1.0f, 1.0f};
+float shininess = 40;
 
 
 Matrix V, P, PV;
@@ -44,7 +46,7 @@ GLuint shprg; // Shader program id
 
 //Antons globala stuff
 enum Projection {Perspective, Frustum, Ortographic};
-enum Shader {Phong, Gourad, Cartoon, Normal2Color};
+enum Shader {Phong, modPhong, Gourad, Cartoon, Normal2Color};
 enum BoundingVolume {Sphere, AABB};
 
 Projection projection = Perspective;
@@ -202,11 +204,17 @@ void renderMesh(Mesh *mesh) {
     glUniformMatrix4fv(glGetUniformLocation(shprg, "View"), 1, GL_FALSE, V.e);
     glUniformMatrix4fv(glGetUniformLocation(shprg, "Model"), 1, GL_FALSE, M.e);
     
-    glUniform4f(glGetUniformLocation(shprg, "AmbientProduct"), 0.3f, 0.6f, 0.3f, 1.0f);
-    glUniform4f(glGetUniformLocation(shprg, "DiffuseProduct"), 0.6f, 0.9f, 0.6f, 1.0f);
+    glUniform4f(glGetUniformLocation(shprg, "AmbientProduct"), 0.1f, 0.1f, 0.1f, 1.0f);
+    glUniform4f(glGetUniformLocation(shprg, "DiffuseProduct"), 0.0f, 0.0f, 1.0f, 1.0f);
     glUniform4f(glGetUniformLocation(shprg, "SpecularProduct"), 1.0f, 1.0f, 1.0f, 1.0f);
     glUniform3f(glGetUniformLocation(shprg, "LightPosition"), lightDir.x, lightDir.y, lightDir.z);
-    glUniform1f(glGetUniformLocation(shprg, "Shininess"), 60.0f);
+    glUniform1f(glGetUniformLocation(shprg, "Shininess"), shininess);
+    
+    glUniform4f(glGetUniformLocation(shprg, "AmbientProduct2"), 0.1f, 0.1f, 0.1f, 1.0f);
+    glUniform4f(glGetUniformLocation(shprg, "DiffuseProduct2"), 1.0f, 0.0f, 0.0f, 1.0f);
+    glUniform4f(glGetUniformLocation(shprg, "SpecularProduct2"), 1.0f, 1.0f, 1.0f, 1.0f);
+    glUniform3f(glGetUniformLocation(shprg, "LightPosition2"), lightDir2.x, lightDir2.y, lightDir2.z);
+    glUniform1f(glGetUniformLocation(shprg, "Shininess"), shininess);
     
     // Select current resources
     glBindVertexArray(mesh->vao);
@@ -567,7 +575,9 @@ void TW_CALL SetShader(const void *value, void *clientData)
     shader = *(const Shader *)value;  // for instance
     
     if(shader == Phong)
-        init("/Users/enari/Documents/Repos/DVA338/DVA338/DVA338/shaders/Phong.vert", "/Users/enari/Documents/Repos/DVA338/DVA338/DVA338/shaders/modPhong.frag");
+        init("/Users/enari/Documents/Repos/DVA338/DVA338/DVA338/shaders/Phong.vert", "/Users/enari/Documents/Repos/DVA338/DVA338/DVA338/shaders/phong.frag");
+    else if(shader == modPhong)
+        init("/Users/enari/Documents/Repos/DVA338/DVA338/DVA338/shaders/Phong.vert", "/Users/enari/Documents/Repos/DVA338/DVA338/DVA338/shaders/modphong.frag");
     else if(shader == Cartoon)
         init("/Users/enari/Documents/Repos/DVA338/DVA338/DVA338/shaders/Phong.vert", "/Users/enari/Documents/Repos/DVA338/DVA338/DVA338/shaders/carToon.frag");
     else if(shader == Normal2Color)
@@ -615,8 +625,8 @@ void prepareTweakBar() {
     TwEnumVal BoundingVolumeEV[] = { {Sphere, "Sphere"}, {AABB, "AABB"} };
     TwType TW_TYPE_BOUNDINGVOLUME = TwDefineEnum("TW_TYPE_BOUNDINGVOLUME", BoundingVolumeEV, 2);
     
-    TwEnumVal shaderEV[] = { {Phong, "Phong"}, {Gourad, "Gourad"}, {Cartoon, "Cartoon"}, {Normal2Color, "Normal2Color"} };
-    TwType TW_TYPE_SHADER = TwDefineEnum("TW_TYPE_SHADER", shaderEV, 4);
+    TwEnumVal shaderEV[] = { {Phong, "Phong"}, {modPhong, "modPhong"}, {Gourad, "Gourad"}, {Cartoon, "Cartoon"}, {Normal2Color, "Normal2Color"} };
+    TwType TW_TYPE_SHADER = TwDefineEnum("TW_TYPE_SHADER", shaderEV, 5);
     
     bar = TwNewBar("TweakBar");
     TwDefine(" TweakBar label='Settings' ");
@@ -638,8 +648,10 @@ void prepareTweakBar() {
     TwAddSeparator(bar, NULL, " Group='Camera' ");
     
     //Shader stuff
-    TwAddVarRW(bar, "Lightdir", TW_TYPE_DIR3F, &lightDir, " label='Light Direction' axisx=-x axisy=-y axisz=-z ");
-    TwAddVarCB(bar, "Shader", TW_TYPE_SHADER, SetShader, GetShader, NULL, " label='Shader' key=y ");
+    TwAddVarRW(bar, "Lightdir1", TW_TYPE_DIR3F, &lightDir, " label='Light1 Direction' axisx=-x axisy=-y axisz=-z ");
+    TwAddVarRW(bar, "Lightdir2", TW_TYPE_DIR3F, &lightDir2, " label='Light2 Direction' axisx=-x axisy=-y axisz=-z ");
+    TwAddVarCB(bar, "Shader", TW_TYPE_SHADER, SetShader, GetShader, NULL, " label='Shader' key=m ");
+    TwAddVarRW(bar, "", TW_TYPE_FLOAT, &shininess, " label='shininess' ");
     //TwAddVarCB(bar, "Shader", TW_TYPE_Shader, &shader, " label='Shader' key=y' ");
     
     //Culling stuff
@@ -705,7 +717,7 @@ int main(int argc, char **argv) {
     prepareTweakBar();
     lastTime = glutGet(GLUT_ELAPSED_TIME);
     
-    init("/Users/enari/Documents/Repos/DVA338/DVA338/DVA338/shaders/Phong.vert", "/Users/enari/Documents/Repos/DVA338/DVA338/DVA338/shaders/modPhong.frag");
+    init("/Users/enari/Documents/Repos/DVA338/DVA338/DVA338/shaders/Phong.vert", "/Users/enari/Documents/Repos/DVA338/DVA338/DVA338/shaders/Phong.frag");
     glutMainLoop();
     
     cleanUp();	

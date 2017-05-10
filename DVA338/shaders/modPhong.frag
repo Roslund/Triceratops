@@ -20,9 +20,8 @@ uniform float Shininess;
 void main(void)
 {
     vec3 L = normalize(LightPosition);// - pos); //vector from light to the point
-    vec3 E = normalize(-pos); //Eye position; from origen to point
+    vec3 E = normalize(pos); //Eye position; from origen to point
     vec3 H = normalize(L + E); //Half angle vector
-    vec3 R = reflect(-L, N);
     
     
     //compute therms in the illumination equation

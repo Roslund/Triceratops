@@ -4,7 +4,7 @@
 //  Created by Anton Roslund on 2017-04-19.
 //  Copyright © 2017 Anton Roslund. All rights reserved.
 //
-#version 150 core
+#version 330 core
 
 in vec3 vPos;
 in vec3 vNorm;
