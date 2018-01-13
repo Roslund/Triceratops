@@ -1,0 +1,306 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		AD196CEA1E9FBA5300E3E875 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AD196CE91E9FBA5300E3E875 /* OpenGL.framework */; };
+		AD196CEC1E9FBA5700E3E875 /* GLUT.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AD196CEB1E9FBA5700E3E875 /* GLUT.framework */; };
+		AD196CF41E9FBA6300E3E875 /* algebra.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AD196CEE1E9FBA6300E3E875 /* algebra.cpp */; };
+		AD196CF51E9FBA6300E3E875 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AD196CF01E9FBA6300E3E875 /* main.cpp */; };
+		AD196CF61E9FBA6300E3E875 /* mesh.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AD196CF11E9FBA6300E3E875 /* mesh.cpp */; };
+		ADCA9D471EA2249000865E10 /* libAntTweakBar.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = ADCA9D461EA2249000865E10 /* libAntTweakBar.dylib */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		AD196CDC1E9FBA4300E3E875 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		AD196CDE1E9FBA4300E3E875 /* DVA338 */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = DVA338; sourceTree = BUILT_PRODUCTS_DIR; };
+		AD196CE91E9FBA5300E3E875 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
+		AD196CEB1E9FBA5700E3E875 /* GLUT.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLUT.framework; path = System/Library/Frameworks/GLUT.framework; sourceTree = SDKROOT; };
+		AD196CED1E9FBA6300E3E875 /* models */ = {isa = PBXFileReference; lastKnownFileType = folder; path = models; sourceTree = "<group>"; };
+		AD196CEE1E9FBA6300E3E875 /* algebra.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = algebra.cpp; sourceTree = "<group>"; };
+		AD196CEF1E9FBA6300E3E875 /* algebra.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = algebra.h; sourceTree = "<group>"; };
+		AD196CF01E9FBA6300E3E875 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		AD196CF11E9FBA6300E3E875 /* mesh.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.cpp.cpp; path = mesh.cpp; sourceTree = "<group>"; tabWidth = 1; };
+		AD196CF21E9FBA6300E3E875 /* mesh.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mesh.h; sourceTree = "<group>"; };
+		ADC236111EA245410005C35B /* AntTweakBar.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AntTweakBar.h; sourceTree = "<group>"; };
+		ADCA9D461EA2249000865E10 /* libAntTweakBar.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libAntTweakBar.dylib; path = ../../../../../../usr/local/Cellar/anttweakbar/1.16/lib/libAntTweakBar.dylib; sourceTree = "<group>"; };
+		ADD87CDE1EA78C8800940F52 /* shaders */ = {isa = PBXFileReference; lastKnownFileType = folder; path = shaders; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		AD196CDB1E9FBA4300E3E875 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				ADCA9D471EA2249000865E10 /* libAntTweakBar.dylib in Frameworks */,
+				AD196CEC1E9FBA5700E3E875 /* GLUT.framework in Frameworks */,
+				AD196CEA1E9FBA5300E3E875 /* OpenGL.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		AD196CD51E9FBA4300E3E875 = {
+			isa = PBXGroup;
+			children = (
+				AD196CE01E9FBA4300E3E875 /* DVA338 */,
+				AD196CDF1E9FBA4300E3E875 /* Products */,
+				AD196CE81E9FBA5300E3E875 /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		AD196CDF1E9FBA4300E3E875 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				AD196CDE1E9FBA4300E3E875 /* DVA338 */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		AD196CE01E9FBA4300E3E875 /* DVA338 */ = {
+			isa = PBXGroup;
+			children = (
+				AD196CED1E9FBA6300E3E875 /* models */,
+				ADD87CDE1EA78C8800940F52 /* shaders */,
+				ADC236111EA245410005C35B /* AntTweakBar.h */,
+				AD196CEE1E9FBA6300E3E875 /* algebra.cpp */,
+				AD196CEF1E9FBA6300E3E875 /* algebra.h */,
+				AD196CF01E9FBA6300E3E875 /* main.cpp */,
+				AD196CF11E9FBA6300E3E875 /* mesh.cpp */,
+				AD196CF21E9FBA6300E3E875 /* mesh.h */,
+			);
+			path = DVA338;
+			sourceTree = "<group>";
+		};
+		AD196CE81E9FBA5300E3E875 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				ADCA9D461EA2249000865E10 /* libAntTweakBar.dylib */,
+				AD196CEB1E9FBA5700E3E875 /* GLUT.framework */,
+				AD196CE91E9FBA5300E3E875 /* OpenGL.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		AD196CDD1E9FBA4300E3E875 /* DVA338 */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AD196CE51E9FBA4300E3E875 /* Build configuration list for PBXNativeTarget "DVA338" */;
+			buildPhases = (
+				AD196CDA1E9FBA4300E3E875 /* Sources */,
+				AD196CDB1E9FBA4300E3E875 /* Frameworks */,
+				AD196CDC1E9FBA4300E3E875 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = DVA338;
+			productName = DVA338;
+			productReference = AD196CDE1E9FBA4300E3E875 /* DVA338 */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		AD196CD61E9FBA4300E3E875 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0830;
+				ORGANIZATIONNAME = "Anton Roslund";
+				TargetAttributes = {
+					AD196CDD1E9FBA4300E3E875 = {
+						CreatedOnToolsVersion = 8.3.1;
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = AD196CD91E9FBA4300E3E875 /* Build configuration list for PBXProject "DVA338" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = AD196CD51E9FBA4300E3E875;
+			productRefGroup = AD196CDF1E9FBA4300E3E875 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				AD196CDD1E9FBA4300E3E875 /* DVA338 */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		AD196CDA1E9FBA4300E3E875 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AD196CF51E9FBA6300E3E875 /* main.cpp in Sources */,
+				AD196CF41E9FBA6300E3E875 /* algebra.cpp in Sources */,
+				AD196CF61E9FBA6300E3E875 /* mesh.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		AD196CE31E9FBA4300E3E875 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.12;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		AD196CE41E9FBA4300E3E875 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.12;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		AD196CE61E9FBA4300E3E875 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					/usr/local/Cellar/anttweakbar/1.16/lib,
+				);
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				VALID_ARCHS = x86_64;
+			};
+			name = Debug;
+		};
+		AD196CE71E9FBA4300E3E875 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					/usr/local/Cellar/anttweakbar/1.16/lib,
+				);
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				VALID_ARCHS = x86_64;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		AD196CD91E9FBA4300E3E875 /* Build configuration list for PBXProject "DVA338" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AD196CE31E9FBA4300E3E875 /* Debug */,
+				AD196CE41E9FBA4300E3E875 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AD196CE51E9FBA4300E3E875 /* Build configuration list for PBXNativeTarget "DVA338" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AD196CE61E9FBA4300E3E875 /* Debug */,
+				AD196CE71E9FBA4300E3E875 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = AD196CD61E9FBA4300E3E875 /* Project object */;
+}
